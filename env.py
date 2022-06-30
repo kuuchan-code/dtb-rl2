@@ -18,7 +18,7 @@ TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.95
 TRAINNING_IMAGE_SIZE = 256, 75  # 適当（縦、横）
 NUM_OF_DELIMITERS = 36
-RESET = {"coordinates": (200, 1755), "waittime_after": 3.5}
+RESET = {"coordinates": (200, 1755), "waittime_after": 3}
 ROTATE30 = {"coordinates": (500, 1800), "waittime_after": 0.0001}
 WAITTIME_AFTER_ROTATE = 0.1
 WAITTIME_AFTER_DROP = 4
@@ -36,7 +36,7 @@ def is_result_screen(img_gray):
     """
     Check the back button to determine game end.
     """
-    template = cv2.imread("src/record.png", 0)
+    template = cv2.imread("src/back.png", 0)
     res = cv2.matchTemplate(
         img_gray, template, cv2.TM_CCOEFF_NORMED)
     loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
@@ -173,7 +173,7 @@ class AnimalTower(gym.Env):
                 cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
                 return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), height, False, {}
             animal_count = get_animal_count(img_bgr)
-            if animal_count and animal_count > self.prev_height:
+            if animal_count and animal_count > self.prev_animal_count:
                 self.prev_animal_count = animal_count
                 print("No height update")
                 print(f"return obs, {height}, False, {{}}")
