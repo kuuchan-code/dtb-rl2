@@ -23,6 +23,7 @@ WAITTIME_AFTER_ROTATE30 = 0.005
 WAITTIME_AFTER_DROP = 4
 WAITLOOP_TO_NEW_STATUS = 6
 POLLONG_INTERVAL = 1
+BACKGOUND_BGR = np.array([251, 208,  49])
 
 
 def is_result_screen(img_gray):
@@ -36,7 +37,7 @@ def is_result_screen(img_gray):
     return len(loc[0]) > 0
 
 
-def get_heght(img_gray):
+def get_height(img_gray):
     """
     Get height
     """
@@ -58,6 +59,14 @@ def get_heght(img_gray):
     if not height:
         height = 0
     return float(height)
+
+
+def image_binarization(img_bgr):
+    img_mask = cv2.inRange(img_bgr, BACKGOUND_BGR, BACKGOUND_BGR)
+    img_masked_bgr = cv2.bitwise_and(img_bgr, img_bgr, mask=img_mask)
+    img_gray = cv2.cvtColor(img_masked_bgr, cv2.COLOR_BGR2GRAY)
+    _, img_bin = cv2.threshold(img_gray, 127, 255, cv2.THRESH_BINARY)
+    return img_bin
 
 
 class AnimalTower(gym.Env):
@@ -111,7 +120,7 @@ class AnimalTower(gym.Env):
         for _ in range(WAITLOOP_TO_NEW_STATUS):
             self.driver.save_screenshot(SCREENSHOT_PATH)
             img_gray = cv2.imread(SCREENSHOT_PATH, 0)
-            height = get_heght(img_gray)
+            height = get_height(img_gray)
             img_gray_resized = cv2.resize(img_gray, dsize=TRAIN_SIZE)
             obs = img_gray_resized
             if is_result_screen(img_gray):
