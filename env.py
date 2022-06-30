@@ -98,7 +98,8 @@ def to_training_image(img_bgr):
     img_bin = cv2.bitwise_not(cv2.inRange(
         img_bgr, BACKGROUND_COLOR_DARK, WHITE))
     cropped_img_bin = img_bin[:1665, 295:785]
-    resized_and_cropped_img_bin = cv2.resize(cropped_img_bin, dsize=TRAINNING_IMAGE_SIZE[::-1])
+    resized_and_cropped_img_bin = cv2.resize(
+        cropped_img_bin, dsize=TRAINNING_IMAGE_SIZE[::-1])
     return resized_and_cropped_img_bin
 
 
