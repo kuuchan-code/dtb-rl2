@@ -14,7 +14,7 @@ from selenium.webdriver.common.actions import interaction
 
 SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
-HEIGHT_TEMPLATE_MATCHING_THRESHOLD = 0.99
+TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.95
 TRAINNING_IMAGE_SIZE = 256, 75  # 適当（縦、横）
 NUM_OF_DELIMITERS = 36
@@ -36,10 +36,10 @@ def is_result_screen(img_gray):
     """
     Check the back button to determine game end.
     """
-    template = cv2.imread("src/back.png", 0)
+    template = cv2.imread("src/record.png", 0)
     res = cv2.matchTemplate(
         img_gray, template, cv2.TM_CCOEFF_NORMED)
-    loc = np.where(res >= HEIGHT_TEMPLATE_MATCHING_THRESHOLD)
+    loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
     return len(loc[0]) > 0
 
 
@@ -53,7 +53,7 @@ def get_height(img_gray):
         template = cv2.imread(f"src/height{i}.png", 0)
         res = cv2.matchTemplate(
             img_gray_height, template, cv2.TM_CCOEFF_NORMED)
-        loc = np.where(res >= HEIGHT_TEMPLATE_MATCHING_THRESHOLD)
+        loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
         for loc_y in loc[1]:
             dict_digits[loc_y] = i
     height = ""
