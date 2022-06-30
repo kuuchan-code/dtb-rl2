@@ -14,7 +14,8 @@ from selenium.webdriver.common.actions import interaction
 
 SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
-TMPLATE_MATCHING_THRESHOLD = 0.99
+HEIGHT_TEMPLATE_MATCHING_THRESHOLD = 0.99
+ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.95
 TRAIN_SIZE = 64, 32  # 適当
 NUM_OF_DELIMITERS = 36
 RESET = {"coordinates": (200, 1755), "waittime_after": 5}
@@ -23,7 +24,13 @@ WAITTIME_AFTER_ROTATE30 = 0.005
 WAITTIME_AFTER_DROP = 4
 WAITLOOP_TO_NEW_STATUS = 6
 POLLONG_INTERVAL = 1
-BACKGOUND_BGR = np.array([251, 208,  49])
+# 背景色 (bgr)
+BACKGROUND_COLOR = np.array([251, 208, 49], dtype=np.uint8)
+BACKGROUND_COLOR_LIGHT = BACKGROUND_COLOR + 4
+BACKGROUND_COLOR_DARK = BACKGROUND_COLOR - 4
+BLACK = np.zeros(3, dtype=np.uint8)
+WHITE = BLACK + 255
+WHITE_DARK = WHITE - 15
 
 
 def is_result_screen(img_gray):
@@ -33,7 +40,7 @@ def is_result_screen(img_gray):
     template = cv2.imread("src/back.png", 0)
     res = cv2.matchTemplate(
         img_gray, template, cv2.TM_CCOEFF_NORMED)
-    loc = np.where(res >= TMPLATE_MATCHING_THRESHOLD)
+    loc = np.where(res >= HEIGHT_TEMPLATE_MATCHING_THRESHOLD)
     return len(loc[0]) > 0
 
 
@@ -44,10 +51,10 @@ def get_height(img_gray):
     img_gray_height = img_gray[65:129, :]
     dict_digits = {}
     for i in list(range(10))+["dot"]:
-        template = cv2.imread(f"images/{i}.png", 0)
+        template = cv2.imread(f"src/height{i}.png", 0)
         res = cv2.matchTemplate(
             img_gray_height, template, cv2.TM_CCOEFF_NORMED)
-        loc = np.where(res >= TMPLATE_MATCHING_THRESHOLD)
+        loc = np.where(res >= HEIGHT_TEMPLATE_MATCHING_THRESHOLD)
         for loc_y in loc[1]:
             dict_digits[loc_y] = i
     height = ""
@@ -61,11 +68,50 @@ def get_height(img_gray):
     return float(height)
 
 
+def counter_shadow_extraction(image: np.ndarray) -> np.ndarray:
+    """
+    数値の影抽出
+    もっと簡単にできなかったか...
+    """
+    img_mask = cv2.bitwise_not(cv2.inRange(
+        image, BACKGROUND_COLOR_LIGHT, WHITE_DARK))
+    result = cv2.bitwise_and(image, image, mask=img_mask)
+    img_mask = cv2.bitwise_not(cv2.inRange(
+        image, BACKGROUND_COLOR_DARK, WHITE)
+    )
+    result = cv2.bitwise_not(cv2.bitwise_and(result, result, mask=img_mask))
+    img_mask = cv2.bitwise_not(cv2.inRange(result, BLACK, WHITE - 1))
+    return cv2.cvtColor(cv2.bitwise_and(result, result, mask=img_mask), cv2.COLOR_BGR2GRAY)
+
+
+def get_animal_count(img_bgr: np.ndarray) -> int:
+    """
+    動物の数を取得
+    引数にはカラー画像を与える!!
+    """
+    img_shadow = counter_shadow_extraction(img_bgr)
+    dict_digits = {}
+    for i in list(range(10)):
+        template = cv2.imread(f"src/count{i}_shadow.png", 0)
+        res = cv2.matchTemplate(
+            img_shadow, template, cv2.TM_CCOEFF_NORMED)
+        loc = np.where(res >= ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD)
+        # print(loc, i)
+        for loc_y in loc[1]:
+            dict_digits[loc_y] = i
+    animal_num = ""
+    for key in sorted(dict_digits.items()):
+        animal_num += str(key[1])
+    if not animal_num:
+        animal_num = 0
+    return int(animal_num)
+
+
 def image_binarization(img_bgr):
     """
     Binarize background and non-background
     """
-    img_mask = cv2.inRange(img_bgr, BACKGOUND_BGR, BACKGOUND_BGR)
+    img_mask = cv2.inRange(img_bgr, BACKGROUND_COLOR, BACKGROUND_COLOR)
     img_masked_bgr = cv2.bitwise_and(img_bgr, img_bgr, mask=img_mask)
     img_gray = cv2.cvtColor(img_masked_bgr, cv2.COLOR_BGR2GRAY)
     _, img_bin = cv2.threshold(img_gray, 127, 255, cv2.THRESH_BINARY)
