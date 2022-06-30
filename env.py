@@ -4,7 +4,7 @@ Deep reinforcement learning on the small base of the Animal Tower.
 from time import sleep
 import gym
 import numpy as np
-from cv2 import cv2
+import cv2
 from appium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
@@ -16,14 +16,13 @@ SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
 HEIGHT_TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.95
-TRAINNING_IMAGE_SIZE = 256, 78  # 適当（縦、横）
+TRAINNING_IMAGE_SIZE = 256, 75  # 適当（縦、横）
 NUM_OF_DELIMITERS = 36
-RESET = {"coordinates": (200, 1755), "waittime_after": 5}
-ROTATE = {"coordinates": (500, 1800), "waittime_after": 0.005}
-WAITTIME_AFTER_ROTATE30 = 0.005
+RESET = {"coordinates": (200, 1755), "waittime_after": 3}
+ROTATE = {"coordinates": (500, 1800), "waittime_after": 0.1}
+WAITTIME_AFTER_ROTATE30 = 0.0001
 WAITTIME_AFTER_DROP = 4
-WAITLOOP_TO_NEW_STATUS = 6
-POLLONG_INTERVAL = 1
+POLLING_INTERVAL = 0.5
 # 背景色 (bgr)
 BACKGROUND_COLOR = np.array([251, 208, 49], dtype=np.uint8)
 BACKGROUND_COLOR_LIGHT = BACKGROUND_COLOR + 4
@@ -68,7 +67,7 @@ def get_height(img_gray):
     return float(height)
 
 
-def get_animal_num(img_bgr: np.ndarray) -> int:
+def get_animal_count(img_bgr: np.ndarray) -> int:
     """
     動物の数を取得
     引数にはカラー画像を与える!!
@@ -82,8 +81,8 @@ def get_animal_num(img_bgr: np.ndarray) -> int:
             img_shadow, template, cv2.TM_CCOEFF_NORMED)
         loc = np.where(res >= ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD)
         # print(loc, i)
-        for y in loc[1]:
-            dict_digits[y] = i
+        for loc_y in loc[1]:
+            dict_digits[loc_y] = i
     animal_num = ""
     for key in sorted(dict_digits.items()):
         animal_num += str(key[1])
@@ -92,44 +91,15 @@ def get_animal_num(img_bgr: np.ndarray) -> int:
     return int(animal_num)
 
 
-def input_image_to_training_image(img_bgr):
+def to_training_image(img_bgr):
+    """
+    入力BGR画像を訓練用画像にする
+    """
     img_bin = cv2.bitwise_not(cv2.inRange(
         img_bgr, BACKGROUND_COLOR_DARK, WHITE))
-    cropped_img_bin = img_bin[:1600, 295:785]
-    resized_and_cropped_img_bin = image_resize(cropped_img_bin, height=256)
+    cropped_img_bin = img_bin[:1665, 295:785]
+    resized_and_cropped_img_bin = cv2.resize(cropped_img_bin, dsize=TRAINNING_IMAGE_SIZE[::-1])
     return resized_and_cropped_img_bin
-
-
-def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
-    # initialize the dimensions of the image to be resized and
-    # grab the image size
-    dim = None
-    (h, w) = image.shape[:2]
-
-    # if both the width and height are None, then return the
-    # original image
-    if width is None and height is None:
-        return image
-
-    # check to see if the width is None
-    if width is None:
-        # calculate the ratio of the height and construct the
-        # dimensions
-        r = height / float(h)
-        dim = (int(w * r), height)
-
-    # otherwise, the height is None
-    else:
-        # calculate the ratio of the width and construct the
-        # dimensions
-        r = width / float(w)
-        dim = (width, int(h * r))
-
-    # resize the image
-    resized = cv2.resize(image, dim, interpolation=inter)
-
-    # return the resized image
-    return resized
 
 
 class AnimalTower(gym.Env):
@@ -142,8 +112,9 @@ class AnimalTower(gym.Env):
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
-        self.reward_range = [0, 1]
+        self.reward_range = [0, 27.79]
         self.prev_height = 0
+        self.prev_animal_count = 0
         caps = {}
         caps["platformName"] = "android"
         caps["appium:ensureWebviewsHavePages"] = True
@@ -161,47 +132,52 @@ class AnimalTower(gym.Env):
     def reset(self):
         print("Resetting...", end=" ", flush=True)
         self.prev_height = 0
-        # Tap the Reset button
+        self.prev_animal_count = 0
         self._tap(RESET["coordinates"], RESET["waittime_after"])
         self.driver.save_screenshot(SCREENSHOT_PATH)
-        img_gray = cv2.imread(SCREENSHOT_PATH, 0)
-        img_gray_resized = cv2.resize(img_gray, dsize=TRAINNING_IMAGE_SIZE)
-        obs = img_gray_resized
-        # Returns obs after start
+        img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+        obs = to_training_image(img_bgr)
         print("Done")
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
 
     def step(self, action):
-        # Perform Action
         print(f"Action({action:.0f})")
         for _ in range(int(action)):
             self._tap(ROTATE["coordinates"], ROTATE["waittime_after"])
         sleep(WAITTIME_AFTER_ROTATE30)
-        self._tap((action[1], 800), WAITTIME_AFTER_DROP)
-        # Generate obs and reward, done flag, and return
-        for _ in range(WAITLOOP_TO_NEW_STATUS):
+        self._tap((540, 800), WAITTIME_AFTER_DROP)
+        self.driver.save_screenshot(SCREENSHOT_PATH)
+        img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+        obs = to_training_image(img_bgr)
+        img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+        height = get_height(img_gray)
+        while True:
             self.driver.save_screenshot(SCREENSHOT_PATH)
-            img_gray = cv2.imread(SCREENSHOT_PATH, 0)
+            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+            obs = to_training_image(img_bgr)
+            img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             height = get_height(img_gray)
-            img_gray_resized = cv2.resize(img_gray, dsize=TRAINNING_IMAGE_SIZE)
-            obs = img_gray_resized
             if is_result_screen(img_gray):
                 print("Game over")
-                print("return observation, 0, True, {}")
+                print("return obs, 0, True, {}")
                 print("-"*NUM_OF_DELIMITERS)
                 cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
                 return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), 0, True, {}
             if height and height > self.prev_height:
                 print(f"Height update: {height}m")
-                print("return obs, 1, False, {}")
+                print(f"return obs, {height}, False, {{}}")
                 print("-"*NUM_OF_DELIMITERS)
                 self.prev_height = height
                 cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-                return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), 1, False, {}
-            sleep(POLLONG_INTERVAL)
+                return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), height, False, {}
+            animal_count = get_animal_count(img_bgr)
+            if animal_count and animal_count > self.prev_height:
+                break
+            sleep(POLLING_INTERVAL)
+        self.prev_animal_count = animal_count
         print("No height update")
-        print("return obs, 1, False, {}")
+        print(f"return obs, {height}, False, {{}}")
         print("-"*NUM_OF_DELIMITERS)
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), 1, False, {}
@@ -217,7 +193,7 @@ class AnimalTower(gym.Env):
             self.operations.w3c_actions.pointer_action.move_to_location(
                 coordinates[0], coordinates[1])
             self.operations.w3c_actions.pointer_action.pointer_down()
-            self.operations.w3c_actions.pointer_action.pause(0.1)
+            self.operations.w3c_actions.pointer_action.pause(0.0001)
             self.operations.w3c_actions.pointer_action.release()
             self.operations.perform()
             sleep(waittime)
