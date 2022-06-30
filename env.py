@@ -16,7 +16,7 @@ SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
 HEIGHT_TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.95
-TRAIN_SIZE = 64, 32  # 適当
+TRAIN_IMAGE_SIZE = 32, 64  # 適当（横、縦）
 NUM_OF_DELIMITERS = 36
 RESET = {"coordinates": (200, 1755), "waittime_after": 5}
 ROTATE = {"coordinates": (500, 1800), "waittime_after": 0.005}
@@ -107,14 +107,16 @@ def get_animal_count(img_bgr: np.ndarray) -> int:
     return int(animal_num)
 
 
+def cropping_to_train_image_size(img_bin):
+    return img_bin[:1600, 295:785]
+
+
 def image_binarization(img_bgr):
     """
     Binarize background and non-background
     """
-    img_mask = cv2.inRange(img_bgr, BACKGROUND_COLOR, BACKGROUND_COLOR)
-    img_masked_bgr = cv2.bitwise_and(img_bgr, img_bgr, mask=img_mask)
-    img_gray = cv2.cvtColor(img_masked_bgr, cv2.COLOR_BGR2GRAY)
-    _, img_bin = cv2.threshold(img_gray, 127, 255, cv2.THRESH_BINARY)
+    img_bin = cv2.bitwise_not(cv2.inRange(
+        img_bgr, BACKGROUND_COLOR_DARK, WHITE))
     return img_bin
 
 
@@ -127,7 +129,7 @@ class AnimalTower(gym.Env):
         print("Initializing...", end=" ", flush=True)
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=(1, *TRAIN_SIZE), dtype=np.uint8)
+            low=0, high=255, shape=(1, *TRAIN_IMAGE_SIZE), dtype=np.uint8)
         self.reward_range = [0, 1]
         self.prev_height = 0
         caps = {}
@@ -151,12 +153,12 @@ class AnimalTower(gym.Env):
         self._tap(RESET["coordinates"], RESET["waittime_after"])
         self.driver.save_screenshot(SCREENSHOT_PATH)
         img_gray = cv2.imread(SCREENSHOT_PATH, 0)
-        img_gray_resized = cv2.resize(img_gray, dsize=TRAIN_SIZE)
+        img_gray_resized = cv2.resize(img_gray, dsize=TRAIN_IMAGE_SIZE)
         obs = img_gray_resized
         # Returns obs after start
         print("Done")
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-        return np.reshape(obs, (1, *TRAIN_SIZE))
+        return np.reshape(obs, (1, *TRAIN_IMAGE_SIZE))
 
     def step(self, action):
         # Perform Action
@@ -170,27 +172,27 @@ class AnimalTower(gym.Env):
             self.driver.save_screenshot(SCREENSHOT_PATH)
             img_gray = cv2.imread(SCREENSHOT_PATH, 0)
             height = get_height(img_gray)
-            img_gray_resized = cv2.resize(img_gray, dsize=TRAIN_SIZE)
+            img_gray_resized = cv2.resize(img_gray, dsize=TRAIN_IMAGE_SIZE)
             obs = img_gray_resized
             if is_result_screen(img_gray):
                 print("Game over")
                 print("return observation, 0, True, {}")
                 print("-"*NUM_OF_DELIMITERS)
                 cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-                return np.reshape(obs, (1, *TRAIN_SIZE)), 0, True, {}
+                return np.reshape(obs, (1, *TRAIN_IMAGE_SIZE)), 0, True, {}
             if height and height > self.prev_height:
                 print(f"Height update: {height}m")
                 print("return obs, 1, False, {}")
                 print("-"*NUM_OF_DELIMITERS)
                 self.prev_height = height
                 cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-                return np.reshape(obs, (1, *TRAIN_SIZE)), 1, False, {}
+                return np.reshape(obs, (1, *TRAIN_IMAGE_SIZE)), 1, False, {}
             sleep(POLLONG_INTERVAL)
         print("No height update")
         print("return obs, 1, False, {}")
         print("-"*NUM_OF_DELIMITERS)
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-        return np.reshape(obs, (1, *TRAIN_SIZE)), 1, False, {}
+        return np.reshape(obs, (1, *TRAIN_IMAGE_SIZE)), 1, False, {}
 
     def render(self):
         pass
