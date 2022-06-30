@@ -68,28 +68,13 @@ def get_height(img_gray):
     return float(height)
 
 
-def counter_shadow_extraction(image: np.ndarray) -> np.ndarray:
-    """
-    数値の影抽出
-    もっと簡単にできなかったか...
-    """
-    img_mask = cv2.bitwise_not(cv2.inRange(
-        image, BACKGROUND_COLOR_LIGHT, WHITE_DARK))
-    result = cv2.bitwise_and(image, image, mask=img_mask)
-    img_mask = cv2.bitwise_not(cv2.inRange(
-        image, BACKGROUND_COLOR_DARK, WHITE)
-    )
-    result = cv2.bitwise_not(cv2.bitwise_and(result, result, mask=img_mask))
-    img_mask = cv2.bitwise_not(cv2.inRange(result, BLACK, WHITE - 1))
-    return cv2.cvtColor(cv2.bitwise_and(result, result, mask=img_mask), cv2.COLOR_BGR2GRAY)
-
-
-def get_animal_count(img_bgr: np.ndarray) -> int:
+def get_animal_num(img_bgr: np.ndarray) -> int:
     """
     動物の数を取得
     引数にはカラー画像を与える!!
     """
-    img_shadow = counter_shadow_extraction(img_bgr)
+    img_shadow = cv2.inRange(
+        img_bgr[264:328], BACKGROUND_COLOR_DARK, WHITE)
     dict_digits = {}
     for i in list(range(10)):
         template = cv2.imread(f"src/count{i}_shadow.png", 0)
@@ -97,8 +82,8 @@ def get_animal_count(img_bgr: np.ndarray) -> int:
             img_shadow, template, cv2.TM_CCOEFF_NORMED)
         loc = np.where(res >= ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD)
         # print(loc, i)
-        for loc_y in loc[1]:
-            dict_digits[loc_y] = i
+        for y in loc[1]:
+            dict_digits[y] = i
     animal_num = ""
     for key in sorted(dict_digits.items()):
         animal_num += str(key[1])
