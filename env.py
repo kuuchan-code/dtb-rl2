@@ -19,8 +19,8 @@ ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.95
 TRAINNING_IMAGE_SIZE = 256, 75  # 適当（縦、横）
 NUM_OF_DELIMITERS = 36
 RESET = {"coordinates": (200, 1755), "waittime_after": 3}
-ROTATE = {"coordinates": (500, 1800), "waittime_after": 0.1}
-WAITTIME_AFTER_ROTATE30 = 0.0001
+ROTATE30 = {"coordinates": (500, 1800), "waittime_after": 0.0001}
+WAITTIME_AFTER_ROTATE = 0.1
 WAITTIME_AFTER_DROP = 4
 POLLING_INTERVAL = 0.5
 # 背景色 (bgr)
@@ -145,8 +145,8 @@ class AnimalTower(gym.Env):
     def step(self, action):
         print(f"Action({action:.0f})")
         for _ in range(int(action)):
-            self._tap(ROTATE["coordinates"], ROTATE["waittime_after"])
-        sleep(WAITTIME_AFTER_ROTATE30)
+            self._tap(ROTATE30["coordinates"], ROTATE30["waittime_after"])
+        sleep(WAITTIME_AFTER_ROTATE)
         self._tap((540, 800), WAITTIME_AFTER_DROP)
         self.driver.save_screenshot(SCREENSHOT_PATH)
         img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
@@ -174,14 +174,13 @@ class AnimalTower(gym.Env):
                 return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), height, False, {}
             animal_count = get_animal_count(img_bgr)
             if animal_count and animal_count > self.prev_height:
-                break
+                self.prev_animal_count = animal_count
+                print("No height update")
+                print(f"return obs, {height}, False, {{}}")
+                print("-"*NUM_OF_DELIMITERS)
+                cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+                return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), 1, False, {}
             sleep(POLLING_INTERVAL)
-        self.prev_animal_count = animal_count
-        print("No height update")
-        print(f"return obs, {height}, False, {{}}")
-        print("-"*NUM_OF_DELIMITERS)
-        cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), 1, False, {}
 
     def render(self):
         pass
