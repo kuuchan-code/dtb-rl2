@@ -3,3 +3,4 @@ Deep reinforcement learning on the small base of the Animal Tower.
 ## To do
 - binarization
 - cropping
+- count animal num
