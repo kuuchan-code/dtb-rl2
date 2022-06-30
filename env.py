@@ -62,6 +62,9 @@ def get_height(img_gray):
 
 
 def image_binarization(img_bgr):
+    """
+    Binarize background and non-background
+    """
     img_mask = cv2.inRange(img_bgr, BACKGOUND_BGR, BACKGOUND_BGR)
     img_masked_bgr = cv2.bitwise_and(img_bgr, img_bgr, mask=img_mask)
     img_gray = cv2.cvtColor(img_masked_bgr, cv2.COLOR_BGR2GRAY)
