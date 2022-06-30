@@ -13,4 +13,4 @@ model = PPO.load(path="ppo_logs/rotate__100_steps",
 #             verbose=1, tensorboard_log="./ppo_tensorboard/")
 checkpoint_callback = CheckpointCallback(save_freq=100, save_path='./ppo_zipfiles/',
                                          name_prefix='rotate')
-model.learn(total_timesteps=1000, callback=[checkpoint_callback])
+model.learn(total_timesteps=1500, callback=[checkpoint_callback])
