@@ -213,6 +213,7 @@ class AnimalTower(gym.Env):
             self._tap((1032, 1857))
             sleep(0.5)
             self._tap((726, 1171))
+            sleep(1.5)
         print("-"*NUM_OF_DELIMITERS)
         return obs_3d, reward, done, {}
 
