@@ -7,7 +7,7 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from env import AnimalTower
 
 env = AnimalTower()
-model = PPO.load(path="ppo_zipfiles/rotate_100_steps",
+model = PPO.load(path="ppo_zipfiles/rotate_200_steps",
                  env=env, tensorboard_log="./ppo_tensorboard/")
 # model = PPO(policy='CnnPolicy', env=env,
 #             verbose=1, tensorboard_log="./ppo_tensorboard/")
