@@ -22,7 +22,7 @@ NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
 COORDINATES_ROTATE30 = 500, 1800
 COORDINATES_DROP = 540, 800
-WAITTIME_AFTER_RETRY = 1
+WAITTIME_AFTER_RETRY = 1    
 WAITTIME_AFTER_DROP = 1
 POLLING_INTERVAL = 0.1
 # 背景色 (bgr)
@@ -104,6 +104,13 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     return resized_and_cropped_img_bin
 
 
+def is_off_x8(img_gray):
+    template = cv2.imread("src/x8_start.png", 0)
+    res = cv2.matchTemplate(
+        img_gray, template, cv2.TM_CCOEFF_NORMED)
+    # print(res.max())
+    return res.max() >= TEMPLATE_MATCHING_THRESHOLD
+
 class AnimalTower(gym.Env):
     """
     Small base for the Animal Tower, action is 12 turns gym environment
@@ -158,7 +165,6 @@ class AnimalTower(gym.Env):
         """
         1アクション
         """
-        time_at_step_start = time()
         print(f"Action({action:.0f})")
         for _ in range(int(action)):
             self._tap(COORDINATES_ROTATE30)
@@ -207,8 +213,10 @@ class AnimalTower(gym.Env):
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         print(f"return obs, {reward}, {done}, {{}}")
         obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
-        print(f"1ステップの経過時間: {time()-time_at_step_start}")
-        if time()-time_at_step_start>8.5:
+        self.driver.save_screenshot(SCREENSHOT_PATH)
+        img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+        img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+        if is_off_x8(img_gray):
             print("x8 speederを再適用")
             self._tap((1032, 1857))
             sleep(0.5)
