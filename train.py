@@ -17,5 +17,5 @@ model = PPO.load(path=model_path,
 #             verbose=1, tensorboard_log="tensorboard")
 print(f"Loaded {model_path}")
 checkpoint_callback = CheckpointCallback(save_freq=100, save_path='models',
-                                         name_prefix='_rotate_cnn')
+                                         name_prefix='_ppo_cnn_rotate')
 model.learn(total_timesteps=1500, callback=[checkpoint_callback])
