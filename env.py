@@ -114,7 +114,7 @@ class AnimalTower(gym.Env):
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
-        self.reward_range = [0.0, 27.79]
+        self.reward_range = [0.0, 1.0]
         caps = {
             "platformName": "android",
             "appium:ensureWebviewHavePages": True,
@@ -190,7 +190,7 @@ class AnimalTower(gym.Env):
             # 高さ更新を検知
             elif height > self.prev_height:
                 print(f"Height update: {height}m")
-                reward = height
+                reward = 1.0
                 break
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
@@ -208,7 +208,7 @@ class AnimalTower(gym.Env):
         print(f"return obs, {reward}, {done}, {{}}")
         obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
         print(f"1ステップの経過時間: {time()-time_at_step_start}")
-        if time()-time_at_step_start>10:
+        if time()-time_at_step_start>8.5:
             print("x8 speederを再適用")
             self._tap((1032, 1857))
             sleep(0.5)
