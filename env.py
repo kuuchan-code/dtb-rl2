@@ -19,8 +19,10 @@ TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.984
 TRAINNING_IMAGE_SIZE = 256, 75  # 適当（縦、横）
 NUM_OF_DELIMITERS = 36
-RESET = {"coordinates": (200, 1755), "waittime_after": 3}
-ROTATE30 = {"coordinates": (500, 1800), "waittime_after": 0.0001}
+COORDINATES_RETRY = 200, 1755
+COORDINATES_ROTATE30 = 500, 1800
+COORDINATES_DROP = 540, 800
+WAITTIME_AFTER_RETRY = 3
 WAITTIME_AFTER_ROTATE = 0.1
 WAITTIME_AFTER_DROP = 4
 POLLING_INTERVAL = 0.5
@@ -139,7 +141,8 @@ class AnimalTower(gym.Env):
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
         while self.prev_height is None or self.prev_animal_count is None:
             # リトライボタンをタップして3秒待つ
-            self._tap(RESET["coordinates"], RESET["waittime_after"])
+            self._tap(COORDINATES_RETRY)
+            sleep(WAITTIME_AFTER_RETRY)
             self.driver.save_screenshot(SCREENSHOT_PATH)
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
             obs = to_training_image(img_bgr)
@@ -158,11 +161,12 @@ class AnimalTower(gym.Env):
         """
         print(f"Action({action:.0f})")
         for _ in range(int(action)):
-            self._tap(ROTATE30["coordinates"], ROTATE30["waittime_after"])
+            self._tap(COORDINATES_ROTATE30)
         # 回転して落とすまで0.1秒待機
         sleep(WAITTIME_AFTER_ROTATE)
         # タップして4秒待機
-        self._tap((540, 800), WAITTIME_AFTER_DROP)
+        self._tap(COORDINATES_DROP)
+        sleep(WAITTIME_AFTER_DROP)
         # 変数の初期化
         done = False
         reward = 0.0
@@ -211,7 +215,7 @@ class AnimalTower(gym.Env):
     def render(self):
         pass
 
-    def _tap(self, coordinates: tuple, waittime: float) -> None:
+    def _tap(self, coordinates: tuple) -> None:
         """
         Tap
         """
@@ -219,7 +223,5 @@ class AnimalTower(gym.Env):
         self.operations.w3c_actions.pointer_action.move_to_location(
             *coordinates)
         self.operations.w3c_actions.pointer_action.pointer_down()
-        self.operations.w3c_actions.pointer_action.pause(0.0001)
         self.operations.w3c_actions.pointer_action.release()
         self.operations.perform()
-        sleep(waittime)
