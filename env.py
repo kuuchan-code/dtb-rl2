@@ -2,7 +2,7 @@
 Deep reinforcement learning on the small base of the Animal Tower.
 """
 from __future__ import annotations
-from time import sleep
+from time import sleep, time
 import gym
 import numpy as np
 import cv2
@@ -22,10 +22,9 @@ NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
 COORDINATES_ROTATE30 = 500, 1800
 COORDINATES_DROP = 540, 800
-WAITTIME_AFTER_RETRY = 3
-WAITTIME_AFTER_ROTATE = 0.1
-WAITTIME_AFTER_DROP = 4
-POLLING_INTERVAL = 0.5
+WAITTIME_AFTER_RETRY = 1
+WAITTIME_AFTER_DROP = 1
+POLLING_INTERVAL = 0.1
 # 背景色 (bgr)
 BACKGROUND_COLOR = np.array([251, 208, 49], dtype=np.uint8)
 BACKGROUND_COLOR_DARK = BACKGROUND_COLOR - 4
@@ -159,11 +158,10 @@ class AnimalTower(gym.Env):
         """
         1アクション
         """
+        time_at_step_start = time()
         print(f"Action({action:.0f})")
         for _ in range(int(action)):
             self._tap(COORDINATES_ROTATE30)
-        # 回転して落とすまで0.1秒待機
-        sleep(WAITTIME_AFTER_ROTATE)
         # タップして4秒待機
         self._tap(COORDINATES_DROP)
         sleep(WAITTIME_AFTER_DROP)
@@ -208,8 +206,14 @@ class AnimalTower(gym.Env):
         # 共通処理
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         print(f"return obs, {reward}, {done}, {{}}")
-        print("-"*NUM_OF_DELIMITERS)
         obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
+        print(f"1ステップの経過時間: {time()-time_at_step_start}")
+        if time()-time_at_step_start>10:
+            print("x8 speederを再適用")
+            self._tap((1032, 1857))
+            sleep(0.5)
+            self._tap((726, 1171))
+        print("-"*NUM_OF_DELIMITERS)
         return obs_3d, reward, done, {}
 
     def render(self):
