@@ -179,6 +179,12 @@ class AnimalTower(gym.Env):
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            if is_off_x8(img_gray):
+                print("x8 speederを適用")
+                self._tap((1032, 1857))
+                sleep(0.5)
+                self._tap((726, 1171))
+                sleep(7)
             # ループで必ず高さと動物数を取得
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
@@ -213,15 +219,6 @@ class AnimalTower(gym.Env):
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         print(f"return obs, {reward}, {done}, {{}}")
         obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
-        self.driver.save_screenshot(SCREENSHOT_PATH)
-        img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
-        img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-        if is_off_x8(img_gray):
-            print("x8 speederを再適用")
-            self._tap((1032, 1857))
-            sleep(0.5)
-            self._tap((726, 1171))
-            sleep(1.5)
         print("-"*NUM_OF_DELIMITERS)
         return obs_3d, reward, done, {}
 
