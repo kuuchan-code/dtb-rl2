@@ -22,8 +22,7 @@ NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
 COORDINATES_ROTATE30 = 500, 1800
 COORDINATES_DROP = 540, 800
-WAITTIME_AFTER_RETRY = 1    
-WAITTIME_AFTER_DROP = 1
+WAITTIME_AFTER_RETRY = 0.5
 POLLING_INTERVAL = 0.1
 # 背景色 (bgr)
 BACKGROUND_COLOR = np.array([251, 208, 49], dtype=np.uint8)
@@ -170,7 +169,6 @@ class AnimalTower(gym.Env):
             self._tap(COORDINATES_ROTATE30)
         # タップして4秒待機
         self._tap(COORDINATES_DROP)
-        sleep(WAITTIME_AFTER_DROP)
         # 変数の初期化
         done = False
         reward = 0.0
