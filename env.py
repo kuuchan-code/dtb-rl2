@@ -129,7 +129,7 @@ class AnimalTower(gym.Env):
         print("Done")
         print("-"*NUM_OF_DELIMITERS)
 
-    def reset(self):
+    def reset(self) -> np.ndarray:
         """
         リセット
         """
@@ -152,7 +152,7 @@ class AnimalTower(gym.Env):
         print("Done")
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
 
-    def step(self, action):
+    def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
         """
         1アクション
         """
@@ -215,8 +215,9 @@ class AnimalTower(gym.Env):
         """
         Tap
         """
+        # アンパックに変更
         self.operations.w3c_actions.pointer_action.move_to_location(
-            coordinates[0], coordinates[1])
+            *coordinates)
         self.operations.w3c_actions.pointer_action.pointer_down()
         self.operations.w3c_actions.pointer_action.pause(0.0001)
         self.operations.w3c_actions.pointer_action.release()
