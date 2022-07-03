@@ -100,6 +100,7 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     """
     return cv2.bitwise_not(cv2.inRange(
          cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
+    
 
 
 def is_off_x8(img_gray):
@@ -121,7 +122,7 @@ class AnimalTower(gym.Env):
         self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
+            low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
         self.reward_range = [0, 1]
         caps = {
             "platformName": "android",
@@ -160,7 +161,7 @@ class AnimalTower(gym.Env):
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
         print("Done")
-        return obs
+        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
 
     def step(self, action_index) -> tuple[np.ndarray, float, bool, dict]:
         """
@@ -220,7 +221,7 @@ class AnimalTower(gym.Env):
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         print(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
-        return obs, reward, done, {}
+        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
 
     def render(self):
         pass
