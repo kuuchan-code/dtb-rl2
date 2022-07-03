@@ -251,14 +251,14 @@ class AnimalTower(gym.Env):
         # 回転タップ
         self.operations.w3c_actions.pointer_action.move_to_location(
             *COORDINATES_ROTATE30)
-        for _ in range(a[0]):
+        for _ in range(120):
             self.operations.w3c_actions.pointer_action.click()
-            self.operations.w3c_actions.pointer_action.pause(0.001)
+            self.operations.w3c_actions.pointer_action.pause(0.05)
         self.operations.w3c_actions.perform()
+        sleep(0.01)
         # 座標タップ
         self.operations.w3c_actions.pointer_action.move_to_location(
             a[1], 800)
         self.operations.w3c_actions.pointer_action.click()
-        self.operations.w3c_actions.pointer_action.pause(0.001)
         # 適用
         self.operations.w3c_actions.perform()
