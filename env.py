@@ -147,6 +147,9 @@ class AnimalTower(gym.Env):
         print("Done")
         print("-"*NUM_OF_DELIMITERS)
 
+        # 時間計測用
+        self.t0 = time()
+
     def reset(self) -> np.ndarray:
         """
         リセット
@@ -169,6 +172,9 @@ class AnimalTower(gym.Env):
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
         print("Done")
+        t1 = time()
+        print(f"リセット所要時間: {t1 - self.t0:4.2f}秒")
+        self.t0 = t1
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
 
     def step(self, action_index) -> tuple[np.ndarray, float, bool, dict]:
@@ -227,6 +233,9 @@ class AnimalTower(gym.Env):
         self.prev_animal_count = animal_count
         # 共通処理
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        t1 = time()
+        print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
+        self.t0 = t1
         print(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
@@ -251,11 +260,10 @@ class AnimalTower(gym.Env):
         # 回転タップ
         self.operations.w3c_actions.pointer_action.move_to_location(
             *COORDINATES_ROTATE30)
-        for _ in range(120):
+        for _ in range(a[0]):
             self.operations.w3c_actions.pointer_action.click()
             self.operations.w3c_actions.pointer_action.pause(0.05)
         self.operations.w3c_actions.perform()
-        sleep(0.01)
         # 座標タップ
         self.operations.w3c_actions.pointer_action.move_to_location(
             a[1], 800)
