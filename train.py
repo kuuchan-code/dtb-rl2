@@ -17,5 +17,5 @@ model = A2C(policy='CnnPolicy', env=env,
             verbose=1, tensorboard_log="tensorboard")
 #print(f"Loaded {model_path}")
 checkpoint_callback = CheckpointCallback(save_freq=100, save_path='models',
-                                         name_prefix='_a2c_cnn_rotate_01')
+                                         name_prefix='_a2c_cnn_rotate_minus1_1')
 model.learn(total_timesteps=1500, callback=[checkpoint_callback])
