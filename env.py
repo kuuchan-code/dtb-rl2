@@ -199,7 +199,8 @@ class AnimalTower(gym.Env):
                 self._tap((1032, 1857))
                 sleep(0.5)
                 self._tap((726, 1171))
-                sleep(7)
+                sleep(5)
+                continue
             # ループで必ず高さと動物数を取得
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
@@ -228,6 +229,7 @@ class AnimalTower(gym.Env):
                 print("No height update")
                 reward = 1.0
                 break
+            sleep(0.1)
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
