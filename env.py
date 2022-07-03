@@ -120,7 +120,7 @@ class AnimalTower(gym.Env):
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
-        self.reward_range = [0.0, 1.0]
+        self.reward_range = [-1, 1]
         caps = {
             "platformName": "android",
             "appium:ensureWebviewHavePages": True,
@@ -171,7 +171,7 @@ class AnimalTower(gym.Env):
         self._tap(COORDINATES_DROP)
         # 変数の初期化
         done = False
-        reward = 0.0
+        reward = 0
         while True:
             self.driver.save_screenshot(SCREENSHOT_PATH)
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
@@ -190,6 +190,8 @@ class AnimalTower(gym.Env):
                 f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
             # 終端
             if is_result_screen(img_gray):
+                if height == 0 and animal_count == 0:
+                    reward = -1
                 print("Game over")
                 done = True
                 break
@@ -200,13 +202,13 @@ class AnimalTower(gym.Env):
             # 高さ更新を検知
             elif height > self.prev_height:
                 print(f"Height update: {height}m")
-                reward = 1.0
+                reward = 1
                 break
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
                 print("No height update")
                 # 高さ更新がない場合の報酬は1らしい
-                reward = 1.0
+                reward = 1
                 break
             sleep(POLLING_INTERVAL)
         # ステップの終わりに必ず高さと動物数を更新!!
