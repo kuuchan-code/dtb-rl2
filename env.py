@@ -99,8 +99,7 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     入力BGR画像を訓練用画像にする
     """
     return cv2.bitwise_not(cv2.inRange(
-         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
-    
+        cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
 
 
 def is_off_x8(img_gray):
@@ -109,6 +108,7 @@ def is_off_x8(img_gray):
         img_gray, template, cv2.TM_CCOEFF_NORMED)
     # print(res.max())
     return res.max() >= TEMPLATE_MATCHING_THRESHOLD
+
 
 class AnimalTower(gym.Env):
     """
@@ -209,12 +209,10 @@ class AnimalTower(gym.Env):
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
                 print("No height update")
-                # 高さ更新がない場合の報酬は1らしい
                 reward = 1
                 break
             sleep(POLLING_INTERVAL)
-        # ステップの終わりに必ず高さと動物数を更新!!
-        # これをしないと, 動物数が変化したにもかかわらずprev_animal_countが更新されない場合がある
+        # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
         # 共通処理
