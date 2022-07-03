@@ -98,7 +98,8 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     """
     入力BGR画像を訓練用画像にする
     """
-    return cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1])
+    return cv2.bitwise_not(cv2.inRange(
+         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
 
 
 def is_off_x8(img_gray):
@@ -120,7 +121,7 @@ class AnimalTower(gym.Env):
         self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=(*TRAINNING_IMAGE_SIZE, 3), dtype=np.uint8)
+            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
         self.reward_range = [0, 1]
         caps = {
             "platformName": "android",
