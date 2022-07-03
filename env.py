@@ -2,7 +2,8 @@
 Deep reinforcement learning on the small base of the Animal Tower.
 """
 from __future__ import annotations
-from time import sleep
+import itertools
+from time import sleep, time
 import gym
 import numpy as np
 import cv2
@@ -17,13 +18,14 @@ SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
 TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.984
-TRAINNING_IMAGE_SIZE = 256, 75  # 適当（縦、横）
+TRAINNING_IMAGE_SIZE = 256, 144  # 適当（縦、横）
 NUM_OF_DELIMITERS = 36
-RESET = {"coordinates": (200, 1755), "waittime_after": 3}
-ROTATE30 = {"coordinates": (500, 1800), "waittime_after": 0.0001}
-WAITTIME_AFTER_ROTATE = 0.1
-WAITTIME_AFTER_DROP = 4
-POLLING_INTERVAL = 0.5
+COORDINATES_RETRY = 200, 1755
+COORDINATES_ROTATE30 = 500, 1800
+COORDINATES_DROP = 540, 800
+WAITTIME_AFTER_RETRY = 0.5
+WAITTIME_AFTER_DROP = 0.8
+POLLING_INTERVAL = 0.1
 # 背景色 (bgr)
 BACKGROUND_COLOR = np.array([251, 208, 49], dtype=np.uint8)
 BACKGROUND_COLOR_DARK = BACKGROUND_COLOR - 4
@@ -96,11 +98,19 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     """
     入力BGR画像を訓練用画像にする
     """
-    img_bin = cv2.bitwise_not(cv2.inRange(
-        img_bgr, BACKGROUND_COLOR_DARK, WHITE))
-    resized_and_cropped_img_bin = cv2.resize(
-        img_bin[:1665, 295:785], dsize=TRAINNING_IMAGE_SIZE[::-1])
-    return resized_and_cropped_img_bin
+    return cv2.bitwise_not(cv2.inRange(
+        cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
+
+
+def is_off_x8(img_gray):
+    """
+    x8の停止を検知
+    """
+    template = cv2.imread("src/x8_start.png", 0)
+    res = cv2.matchTemplate(
+        img_gray, template, cv2.TM_CCOEFF_NORMED)
+    # print(res.max())
+    return res.max() >= TEMPLATE_MATCHING_THRESHOLD
 
 
 class AnimalTower(gym.Env):
@@ -110,6 +120,9 @@ class AnimalTower(gym.Env):
 
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
+        a = [0, 4, 6, 8]
+        b = [150, 540, 929]
+        self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
@@ -147,7 +160,8 @@ class AnimalTower(gym.Env):
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
         while self.prev_height is None or self.prev_animal_count is None:
             # リトライボタンをタップして3秒待つ
-            self._tap(RESET["coordinates"], RESET["waittime_after"])
+            self._tap(COORDINATES_RETRY)
+            sleep(WAITTIME_AFTER_RETRY)
             self.driver.save_screenshot(SCREENSHOT_PATH)
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
             obs = to_training_image(img_bgr)
@@ -160,24 +174,29 @@ class AnimalTower(gym.Env):
         print("Done")
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
 
-    def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
+    def step(self, action_index) -> tuple[np.ndarray, float, bool, dict]:
         """
         1アクション
         """
-        print(f"Action({action:.0f})")
-        self._tap_multi((500, 1800), int(action), 0.0001)
-        # 回転して落とすまで0.1秒待機
-        sleep(WAITTIME_AFTER_ROTATE)
-        # タップして4秒待機
-        self._tap((540, 800), WAITTIME_AFTER_DROP)
+        action = self.ACTION_MAP[action_index]
+        print(f"Action({action[0], action[1]})")
+        # 回転と移動
+        self._rotate_and_move(action)
+        sleep(WAITTIME_AFTER_DROP)
         # 変数の初期化
         done = False
-        reward = 0.0
+        reward = 0
         while True:
             self.driver.save_screenshot(SCREENSHOT_PATH)
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            if is_off_x8(img_gray):
+                print("x8 speederを適用")
+                self._tap((1032, 1857))
+                sleep(0.5)
+                self._tap((726, 1171))
+                sleep(7)
             # ループで必ず高さと動物数を取得
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
@@ -204,41 +223,35 @@ class AnimalTower(gym.Env):
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
                 print("No height update")
-                # 高さ更新がない場合の報酬は1らしい
                 reward = 1.0
                 break
             sleep(POLLING_INTERVAL)
-        # ステップの終わりに必ず高さと動物数を更新!!
-        # これをしないと, 動物数が変化したにもかかわらずprev_animal_countが更新されない場合がある
+        # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
         # 共通処理
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         print(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
-        obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
-        return obs_3d, reward, done, {}
+        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
 
     def render(self):
         pass
 
-    def _tap(self, coordinates: tuple, waittime: float) -> None:
+    def _tap(self, coordinates: tuple) -> None:
         """
         Tap
         """
         self.operations.w3c_actions.pointer_action.move_to_location(
             *coordinates)
         self.operations.w3c_actions.pointer_action.pointer_down()
-        self.operations.w3c_actions.pointer_action.pause(0.0001)
         self.operations.w3c_actions.pointer_action.release()
         self.operations.perform()
-        sleep(waittime)
 
-    def _tap_multi(self, coordinates: tuple, num_taps: int, waittime: float) -> None:
+    def _tap_multi(self, coordinates: tuple, num_taps: int) -> None:
         """
         複数回タップ
         """
-        print(coordinates, num_taps, waittime)
         self.operations.w3c_actions.pointer_action.move_to_location(
             *coordinates)
         for _ in range(num_taps):
@@ -247,4 +260,29 @@ class AnimalTower(gym.Env):
             self.operations.w3c_actions.pointer_action.release()
             self.operations.w3c_actions.pointer_action.pause(0.01)
         self.operations.perform()
-        sleep(waittime)
+
+    def _rotate_and_move(self, a: np.ndarray) -> None:
+        """
+        高速化のために回転と移動を同時に操作
+        """
+        # 回転タップ
+        self.operations.w3c_actions.pointer_action.move_to_location(
+            *COORDINATES_ROTATE30)
+        for _ in range(a[0]):
+            # self.operations.w3c_actions.pointer_action.pointer_down()
+            # self.operations.w3c_actions.pointer_action.pause(0.001)
+            # self.operations.w3c_actions.pointer_action.release()
+            # self.operations.w3c_actions.pointer_action.pause(0.001)
+            self.operations.w3c_actions.pointer_action.click()
+            self.operations.w3c_actions.pointer_action.pause(0.001)
+        self.operations.w3c_actions.perform()
+        # 座標タップ
+        self.operations.w3c_actions.pointer_action.move_to_location(
+            a[1], 800)
+        # self.operations.w3c_actions.pointer_action.pointer_down()
+        # self.operations.w3c_actions.pointer_action.pause(0.01)
+        # self.operations.w3c_actions.pointer_action.release()
+        self.operations.w3c_actions.pointer_action.click()
+        self.operations.w3c_actions.pointer_action.pause(0.001)
+        # 適用
+        self.operations.w3c_actions.perform()
