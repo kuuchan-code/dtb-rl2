@@ -190,7 +190,7 @@ class AnimalTower(gym.Env):
                 f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
             # 終端
             if is_result_screen(img_gray):
-                if height == 0 and animal_count == 0:
+                if height is None and animal_count is None:
                     reward = -1
                 print("Game over")
                 done = True
