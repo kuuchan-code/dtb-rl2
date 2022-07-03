@@ -108,12 +108,12 @@ class AnimalTower(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self):
+    def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
-        self.reward_range = [0.0, 27.79]
+        self.reward_range = [0.0, 1.0]
         caps = {
             "platformName": "android",
             "appium:ensureWebviewHavePages": True,
@@ -126,6 +126,14 @@ class AnimalTower(gym.Env):
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
+
+        self.log_path = log_path
+        self.episode_count = 0
+        self.log_episode_max = log_episode_max
+        # ヘッダのみ書き込み
+        with open(self.log_path, "w") as f:
+            print(f"animals,height", file=f)
+
         print("Done")
         print("-"*NUM_OF_DELIMITERS)
 
@@ -157,8 +165,7 @@ class AnimalTower(gym.Env):
         1アクション
         """
         print(f"Action({action:.0f})")
-        for _ in range(int(action)):
-            self._tap(ROTATE30["coordinates"], ROTATE30["waittime_after"])
+        self._tap_multi((500, 1800), int(action), 0.0001)
         # 回転して落とすまで0.1秒待機
         sleep(WAITTIME_AFTER_ROTATE)
         # タップして4秒待機
@@ -180,6 +187,10 @@ class AnimalTower(gym.Env):
             if is_result_screen(img_gray):
                 print("Game over")
                 done = True
+                with open(self.log_path, "a") as f:
+                    print(f"{self.prev_animal_count},{self.prev_height}", file=f)
+                self.episode_count += 1
+                assert self.episode_count < self.log_episode_max, f"エピソード{self.log_episode_max}到達"
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
@@ -188,7 +199,7 @@ class AnimalTower(gym.Env):
             # 高さ更新を検知
             elif height > self.prev_height:
                 print(f"Height update: {height}m")
-                reward = height
+                reward = 1.0
                 break
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
@@ -215,11 +226,25 @@ class AnimalTower(gym.Env):
         """
         Tap
         """
-        # アンパックに変更
         self.operations.w3c_actions.pointer_action.move_to_location(
             *coordinates)
         self.operations.w3c_actions.pointer_action.pointer_down()
         self.operations.w3c_actions.pointer_action.pause(0.0001)
         self.operations.w3c_actions.pointer_action.release()
+        self.operations.perform()
+        sleep(waittime)
+
+    def _tap_multi(self, coordinates: tuple, num_taps: int, waittime: float) -> None:
+        """
+        複数回タップ
+        """
+        print(coordinates, num_taps, waittime)
+        self.operations.w3c_actions.pointer_action.move_to_location(
+            *coordinates)
+        for _ in range(num_taps):
+            self.operations.w3c_actions.pointer_action.pointer_down()
+            self.operations.w3c_actions.pointer_action.pause(0.01)
+            self.operations.w3c_actions.pointer_action.release()
+            self.operations.w3c_actions.pointer_action.pause(0.01)
         self.operations.perform()
         sleep(waittime)
