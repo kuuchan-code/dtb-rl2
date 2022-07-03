@@ -2,6 +2,7 @@
 Deep reinforcement learning on the small base of the Animal Tower.
 """
 from __future__ import annotations
+import itertools
 from time import sleep, time
 import gym
 import numpy as np
@@ -17,12 +18,13 @@ SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
 TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.984
-TRAINNING_IMAGE_SIZE = 256, 75  # 適当（縦、横）
+TRAINNING_IMAGE_SIZE = 256, 144  # 適当（縦、横）
 NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
 COORDINATES_ROTATE30 = 500, 1800
 COORDINATES_DROP = 540, 800
 WAITTIME_AFTER_RETRY = 0.5
+WAITTIME_AFTER_DROP = 0.8
 POLLING_INTERVAL = 0.1
 # 背景色 (bgr)
 BACKGROUND_COLOR = np.array([251, 208, 49], dtype=np.uint8)
@@ -96,11 +98,7 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     """
     入力BGR画像を訓練用画像にする
     """
-    img_bin = cv2.bitwise_not(cv2.inRange(
-        img_bgr, BACKGROUND_COLOR_DARK, WHITE))
-    resized_and_cropped_img_bin = cv2.resize(
-        img_bin[:1665, 295:785], dsize=TRAINNING_IMAGE_SIZE[::-1])
-    return resized_and_cropped_img_bin
+    return cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1])
 
 
 def is_off_x8(img_gray):
@@ -117,10 +115,13 @@ class AnimalTower(gym.Env):
 
     def __init__(self):
         print("Initializing...", end=" ", flush=True)
+        a = [0, 4, 6, 8]
+        b = [150, 540, 929]
+        self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
-        self.reward_range = [-1, 1]
+            low=0, high=255, shape=(*TRAINNING_IMAGE_SIZE, 3), dtype=np.uint8)
+        self.reward_range = [0, 1]
         caps = {
             "platformName": "android",
             "appium:ensureWebviewHavePages": True,
@@ -158,17 +159,18 @@ class AnimalTower(gym.Env):
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
         print("Done")
-        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
+        return obs
 
-    def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
+    def step(self, action_index) -> tuple[np.ndarray, float, bool, dict]:
         """
         1アクション
         """
-        print(f"Action({action:.0f})")
-        for _ in range(int(action)):
+        action = self.ACTION_MAP[action_index]
+        print(f"Action({action[0], action[1]})")
+        for _ in range(int(action[0])):
             self._tap(COORDINATES_ROTATE30)
-        # タップして4秒待機
-        self._tap(COORDINATES_DROP)
+        self._tap((action[1], 800))
+        sleep(WAITTIME_AFTER_DROP)
         # 変数の初期化
         done = False
         reward = 0
@@ -190,9 +192,6 @@ class AnimalTower(gym.Env):
                 f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
             # 終端
             if is_result_screen(img_gray):
-                if (self.prev_height == 0 and height is None) and\
-                    (self.prev_animal_count == 0 and animal_count is None):
-                    reward = -1
                 print("Game over")
                 done = True
                 break
@@ -219,9 +218,8 @@ class AnimalTower(gym.Env):
         # 共通処理
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         print(f"return obs, {reward}, {done}, {{}}")
-        obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
         print("-"*NUM_OF_DELIMITERS)
-        return obs_3d, reward, done, {}
+        return obs, reward, done, {}
 
     def render(self):
         pass

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import numpy as np
 import cv2
 BACKGROUND_COLOR = np.array([251, 208, 49], dtype=np.uint8)
@@ -39,13 +40,13 @@ def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
     return resized
 
 def input_image_to_training_image(img_bgr):
-    img_bin = cv2.bitwise_not(cv2.inRange(
-        img_bgr, BACKGROUND_COLOR_DARK, WHITE))
-    cropped_img_bin = img_bin[:1665, 295:785]
-    resized_and_cropped_img_bin = image_resize(cropped_img_bin, height=256)
+    # img_bin = cv2.bitwise_not(cv2.inRange(
+    #     img_bgr, BACKGROUND_COLOR_DARK, WHITE))
+    # cropped_img_bin = img_bin[:1665, 295:785]
+    resized_and_cropped_img_bin = image_resize(img_bgr, height=256)
     return resized_and_cropped_img_bin
 
 test3 = cv2.imread("screenshot.png")
-cv2.imwrite("test4.png", test3[:1665, 295:785])
-cv2.imwrite("test3.png", input_image_to_training_image(test3))
+# cv2.imwrite("test4.png", test3[:1665, 295:785])
+# cv2.imwrite("test3.png", input_image_to_training_image(test3))
 print(input_image_to_training_image(test3).shape)
