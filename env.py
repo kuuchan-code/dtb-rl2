@@ -22,10 +22,7 @@ TRAINNING_IMAGE_SIZE = 256, 144  # 適当（縦、横）
 NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
 COORDINATES_ROTATE30 = 500, 1800
-COORDINATES_DROP = 540, 800
-WAITTIME_AFTER_RETRY = 0.5
-WAITTIME_AFTER_DROP = 0.8
-POLLING_INTERVAL = 0.1
+COORDINATES_CENTER = 540, 800
 # 背景色 (bgr)
 BACKGROUND_COLOR = np.array([251, 208, 49], dtype=np.uint8)
 BACKGROUND_COLOR_DARK = BACKGROUND_COLOR - 4
@@ -161,7 +158,7 @@ class AnimalTower(gym.Env):
         while self.prev_height is None or self.prev_animal_count is None:
             # リトライボタンをタップして3秒待つ
             self._tap(COORDINATES_RETRY)
-            sleep(WAITTIME_AFTER_RETRY)
+            sleep(0.5)
             self.driver.save_screenshot(SCREENSHOT_PATH)
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
             obs = to_training_image(img_bgr)
@@ -182,7 +179,7 @@ class AnimalTower(gym.Env):
         print(f"Action({action[0], action[1]})")
         # 回転と移動
         self._rotate_and_move(action)
-        sleep(WAITTIME_AFTER_DROP)
+        sleep(0.7)
         # 変数の初期化
         done = False
         reward = 0
@@ -225,7 +222,6 @@ class AnimalTower(gym.Env):
                 print("No height update")
                 reward = 1.0
                 break
-            sleep(POLLING_INTERVAL)
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
@@ -248,19 +244,6 @@ class AnimalTower(gym.Env):
         self.operations.w3c_actions.pointer_action.release()
         self.operations.perform()
 
-    def _tap_multi(self, coordinates: tuple, num_taps: int) -> None:
-        """
-        複数回タップ
-        """
-        self.operations.w3c_actions.pointer_action.move_to_location(
-            *coordinates)
-        for _ in range(num_taps):
-            self.operations.w3c_actions.pointer_action.pointer_down()
-            self.operations.w3c_actions.pointer_action.pause(0.01)
-            self.operations.w3c_actions.pointer_action.release()
-            self.operations.w3c_actions.pointer_action.pause(0.01)
-        self.operations.perform()
-
     def _rotate_and_move(self, a: np.ndarray) -> None:
         """
         高速化のために回転と移動を同時に操作
@@ -269,19 +252,12 @@ class AnimalTower(gym.Env):
         self.operations.w3c_actions.pointer_action.move_to_location(
             *COORDINATES_ROTATE30)
         for _ in range(a[0]):
-            # self.operations.w3c_actions.pointer_action.pointer_down()
-            # self.operations.w3c_actions.pointer_action.pause(0.001)
-            # self.operations.w3c_actions.pointer_action.release()
-            # self.operations.w3c_actions.pointer_action.pause(0.001)
             self.operations.w3c_actions.pointer_action.click()
             self.operations.w3c_actions.pointer_action.pause(0.001)
         self.operations.w3c_actions.perform()
         # 座標タップ
         self.operations.w3c_actions.pointer_action.move_to_location(
             a[1], 800)
-        # self.operations.w3c_actions.pointer_action.pointer_down()
-        # self.operations.w3c_actions.pointer_action.pause(0.01)
-        # self.operations.w3c_actions.pointer_action.release()
         self.operations.w3c_actions.pointer_action.click()
         self.operations.w3c_actions.pointer_action.pause(0.001)
         # 適用

@@ -132,3 +132,4 @@ dmypy.json
 *.zip
 screenshot.png
 observation.png
+train.csv
