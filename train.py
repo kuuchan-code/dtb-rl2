@@ -19,4 +19,4 @@ model = A2C(policy='CnnPolicy', env=env,
              verbose=1, tensorboard_log="tensorboard")
 checkpoint_callback = CheckpointCallback(save_freq=100, save_path='models',
                                          name_prefix=name_prefix)
-model.learn(total_timesteps=1500, callback=[checkpoint_callback])
+model.learn(total_timesteps=10000, callback=[checkpoint_callback])
