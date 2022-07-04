@@ -8,7 +8,7 @@ from stable_baselines3 import A2C
 from stable_baselines3.common.callbacks import CheckpointCallback
 from env import AnimalTower
 
-name_prefix = "_a2c_cnn_rotate_3d_bin"
+name_prefix = "_r12m1sb_rewarddecay"
 env = AnimalTower(log_path=name_prefix+".csv")
 # 最新のモデルを読み込むように
 model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
