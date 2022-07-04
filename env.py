@@ -100,7 +100,7 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     img_bin = cv2.bitwise_not(cv2.inRange(
         img_bgr, BACKGROUND_COLOR_DARK, WHITE))
     cropped_img_bin = img_bin[:1665, 295:785]
-    resized_and_cropped_img_bin = image_resize(img_bgr, height=256)
+    resized_and_cropped_img_bin = cv2.resize(cropped_img_bin, TRAINNING_IMAGE_SIZE)
     return resized_and_cropped_img_bin
     
     # 大きい盤面
