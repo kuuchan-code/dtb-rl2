@@ -124,7 +124,7 @@ class AnimalTower(gym.Env):
         a = np.linspace(0, 11, 10, dtype=np.uint8)
         np.random.shuffle(a)
         # b = [150, 540, 929]
-        b = np.linspace(440, 640, 5, dtype=np.uint32)
+        b = np.linspace(440, 640, 3, dtype=np.uint32)
         np.random.shuffle(b)
         self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
         # print(self.ACTION_MAP)
