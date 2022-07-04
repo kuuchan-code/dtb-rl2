@@ -122,7 +122,7 @@ class AnimalTower(gym.Env):
         print("Initializing...", end=" ", flush=True)
         a = np.linspace(0, 11, 12, dtype=np.uint8)
         # b = [150, 540, 929]
-        b = np.linspace(440, 640, 3, dtype=np.uint32)
+        b = [540]
         self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
         np.random.seed(0)
         np.random.shuffle(self.ACTION_MAP)
