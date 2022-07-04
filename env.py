@@ -120,6 +120,8 @@ class AnimalTower(gym.Env):
         a = [0, 4, 6, 8]
         b = [150, 540, 929]
         self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
+        np.random.seed(0)
+        np.random.shuffle(self.ACTION_MAP)
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
