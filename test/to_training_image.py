@@ -42,8 +42,8 @@ def image_resize(image, width=None, height=None, inter=cv2.INTER_AREA):
 def input_image_to_training_image(img_bgr):
     # img_bin = cv2.bitwise_not(cv2.inRange(
     #     img_bgr, BACKGROUND_COLOR_DARK, WHITE))
-    # cropped_img_bin = img_bin[:1665, 295:785]
-    resized_and_cropped_img_bin = image_resize(img_bgr, height=256)
+    cropped_img_bin = img_bgr[:1665, 295:785]
+    resized_and_cropped_img_bin = image_resize(cropped_img_bin, height=256)
     return resized_and_cropped_img_bin
 
 test3 = cv2.imread("screenshot.png")
