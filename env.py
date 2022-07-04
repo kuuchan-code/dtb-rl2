@@ -117,9 +117,10 @@ class AnimalTower(gym.Env):
 
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
-        a = [0, 4, 6, 8]
-        b = [150, 540, 929]
-        self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
+        r = [0, 4, 6, 8]
+        m = [150, 540, 929]
+        self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
+        # 並び替えは不要
         self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
