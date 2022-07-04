@@ -117,9 +117,11 @@ class AnimalTower(gym.Env):
 
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
-        a = [0, 4, 6, 8]
-        b = [150, 540, 929]
+        a = np.linspace(0, 11, 10, dtype=np.uint32)
+        # b = [150, 540, 929]
+        b = np.linspace(540, 740, 5, dtype=np.uint32)
         self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
+        # print(self.ACTION_MAP)
         self.action_space = gym.spaces.Discrete(12)
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
@@ -251,8 +253,8 @@ class AnimalTower(gym.Env):
         """
         self.operations.w3c_actions.pointer_action.move_to_location(
             *coordinates)
-        self.operations.w3c_actions.pointer_action.pointer_down()
-        self.operations.w3c_actions.pointer_action.release()
+        self.operations.w3c_actions.pointer_action.click()
+        self.operations.w3c_actions.pointer_action.pause(0.05)
         self.operations.perform()
 
     def _rotate_and_move(self, a: np.ndarray) -> None:
