@@ -1,13 +1,4 @@
 try({summary(df)})
-<<<<<<< HEAD
-    animals          height     
- Min.   :0.000   Min.   :0.000  
- 1st Qu.:1.000   1st Qu.:1.127  
- Median :1.000   Median :1.330  
- Mean   :1.714   Mean   :1.808  
- 3rd Qu.:2.000   3rd Qu.:2.320  
- Max.   :8.000   Max.   :8.980  
-=======
     animals         height     
  Min.   :0.00   Min.   :0.000  
  1st Qu.:1.00   1st Qu.:1.150  
@@ -15,22 +6,12 @@ try({summary(df)})
  Mean   :2.33   Mean   :2.378  
  3rd Qu.:3.00   3rd Qu.:3.130  
  Max.   :8.00   Max.   :8.980  
->>>>>>> ba290944420e0c55b5ef3fef1763fcde5c126387
 
 try({t.test(df["animals"])})
 
 	One Sample t-test
 
 data:  df["animals"]
-<<<<<<< HEAD
-t = 13.764, df = 111, p-value < 2.2e-16
-alternative hypothesis: true mean is not equal to 0
-95 percent confidence interval:
- 1.467480 1.961092
-sample estimates:
-mean of x 
- 1.714286 
-=======
 t = 28.066, df = 393, p-value < 2.2e-16
 alternative hypothesis: true mean is not equal to 0
 95 percent confidence interval:
@@ -38,7 +19,6 @@ alternative hypothesis: true mean is not equal to 0
 sample estimates:
 mean of x 
  2.329949 
->>>>>>> ba290944420e0c55b5ef3fef1763fcde5c126387
 
 
 try({t.test(df["height"])})
@@ -46,15 +26,6 @@ try({t.test(df["height"])})
 	One Sample t-test
 
 data:  df["height"]
-<<<<<<< HEAD
-t = 14.147, df = 111, p-value < 2.2e-16
-alternative hypothesis: true mean is not equal to 0
-95 percent confidence interval:
- 1.555174 2.061790
-sample estimates:
-mean of x 
- 1.808482 
-=======
 t = 29.077, df = 393, p-value < 2.2e-16
 alternative hypothesis: true mean is not equal to 0
 95 percent confidence interval:
@@ -62,7 +33,6 @@ alternative hypothesis: true mean is not equal to 0
 sample estimates:
 mean of x 
  2.378173 
->>>>>>> ba290944420e0c55b5ef3fef1763fcde5c126387
 
 
 try({cor.test(df[,1], df[,2])})
@@ -70,15 +40,6 @@ try({cor.test(df[,1], df[,2])})
 	Pearson's product-moment correlation
 
 data:  df[, 1] and df[, 2]
-<<<<<<< HEAD
-t = 38.306, df = 110, p-value < 2.2e-16
-alternative hypothesis: true correlation is not equal to 0
-95 percent confidence interval:
- 0.9487412 0.9754775
-sample estimates:
-      cor 
-0.9645018 
-=======
 t = 73.812, df = 392, p-value < 2.2e-16
 alternative hypothesis: true correlation is not equal to 0
 95 percent confidence interval:
@@ -86,6 +47,5 @@ alternative hypothesis: true correlation is not equal to 0
 sample estimates:
       cor 
 0.9658567 
->>>>>>> ba290944420e0c55b5ef3fef1763fcde5c126387
 
 

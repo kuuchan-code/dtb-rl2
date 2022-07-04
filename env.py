@@ -196,7 +196,7 @@ class AnimalTower(gym.Env):
         sleep(0.7)
         # 変数の初期化
         done = False
-        reward = 0.0
+        reward = 0
         while True:
             self.driver.save_screenshot(SCREENSHOT_PATH)
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
