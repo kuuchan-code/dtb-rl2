@@ -252,7 +252,7 @@ class AnimalTower(gym.Env):
         print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
         self.t0 = t1
         if action[0] == 0 or action[0] == 6:
-            reward = 0.5
+            reward *= 0.5
         print(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
