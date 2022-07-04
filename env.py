@@ -18,7 +18,8 @@ SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
 TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.984
-TRAINNING_IMAGE_SIZE = 256, 144  # 適当（縦、横）
+TRAINNING_IMAGE_SIZE = 256, 75  # small
+TRAINNING_IMAGE_SIZE = 256, 144  # big
 NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
 COORDINATES_ROTATE30 = 500, 1800
@@ -95,6 +96,14 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     """
     入力BGR画像を訓練用画像にする
     """
+    # 小さい盤面
+    # img_bin = cv2.bitwise_not(cv2.inRange(
+    #     img_bgr, BACKGROUND_COLOR_DARK, WHITE))
+    # cropped_img_bin = img_bin[:1665, 295:785]
+    # resized_and_cropped_img_bin = cv2.resize(cropped_img_bin, TRAINNING_IMAGE_SIZE)
+    # return resized_and_cropped_img_bin
+
+    # 大きい盤面
     return cv2.bitwise_not(cv2.inRange(
         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
 
@@ -117,10 +126,9 @@ class AnimalTower(gym.Env):
 
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
-        a = [0, 4, 6, 8]
-        # b = [150, 540, 929]
-        b = np.linspace(150, 929, 11, dtype=np.uint32)
-        self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
+        r = [0, 4, 6, 8]
+        m = np.linspace(150, 929, 11, dtype=np.uint32)
+        self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
         # 出力サイズを変更し忘れていた!!
         self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
         self.observation_space = gym.spaces.Box(

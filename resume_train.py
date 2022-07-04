@@ -9,21 +9,21 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from env import AnimalTower
 from datetime import datetime
 
-name_prefix = "_a2c_cnn_rotate_move11_bin"
+# 識別子
+name_prefix = "_a2c_cnn_r4m11b"
+# 時刻
 now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 print(f"{name_prefix}_{now_str}.csv")
 # assert False
 env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv")
 
 # 最新のモデルを読み込むように
-model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
+# model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
+model_path = "models/a2c_cnn_rotate_move11_bin_1950_steps.zip"
+
 model = A2C.load(path=model_path,
                  env=env, tensorboard_log="tensorboard")
 print(f"Loaded {model_path}")
-
-# 新規作成
-# model = A2C(policy='CnnPolicy', env=env,
-#             verbose=1, tensorboard_log="tensorboard")
 
 checkpoint_callback = CheckpointCallback(save_freq=50, save_path="models",
                                          name_prefix=name_prefix)
