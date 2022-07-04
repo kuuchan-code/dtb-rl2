@@ -18,7 +18,8 @@ SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
 TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.984
-TRAINNING_IMAGE_SIZE = 256, 75  # 適当（縦、横）
+TRAINNING_IMAGE_SIZE = 256, 75  # small
+TRAINNING_IMAGE_SIZE = 256, 144  # big
 NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
 COORDINATES_ROTATE30 = 500, 1800
@@ -95,11 +96,16 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     """
     入力BGR画像を訓練用画像にする
     """
+    # 小さい盤面
     img_bin = cv2.bitwise_not(cv2.inRange(
         img_bgr, BACKGROUND_COLOR_DARK, WHITE))
-    resized_and_cropped_img_bin = cv2.resize(
-        img_bin[:1665, 295:785], dsize=TRAINNING_IMAGE_SIZE[::-1])
+    cropped_img_bin = img_bin[:1665, 295:785]
+    resized_and_cropped_img_bin = image_resize(img_bgr, height=256)
     return resized_and_cropped_img_bin
+    
+    # 大きい盤面
+    # return cv2.bitwise_not(cv2.inRange(
+    #     cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
 
 
 def is_off_x8(img_gray):
@@ -120,23 +126,14 @@ class AnimalTower(gym.Env):
 
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
-<<<<<<< HEAD
-        a = np.linspace(0, 11, 12, dtype=np.uint8)
+        r = np.linspace(0, 11, 12, dtype=np.uint8)
         # b = [150, 540, 929]
-        b = [540]
-        self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
+        m = [540]
+        self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
         np.random.seed(0)
         np.random.shuffle(self.ACTION_MAP)
         # print(self.ACTION_MAP)
         self.action_space = gym.spaces.Discrete(len(a)*len(b))
-=======
-        r = [0, 4, 6, 8]
-        m = [150, 540, 929]
-        self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
-        np.random.seed(0)
-        np.random.shuffle(self.ACTION_MAP)
-        self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
->>>>>>> 2ac94929a6087d52aa48c95e73cac21fbf055ca4
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
