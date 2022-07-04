@@ -96,6 +96,14 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     """
     入力BGR画像を訓練用画像にする
     """
+    # 小さい盤面
+    # img_bin = cv2.bitwise_not(cv2.inRange(
+    #     img_bgr, BACKGROUND_COLOR_DARK, WHITE))
+    # cropped_img_bin = img_bin[:1665, 295:785]
+    # resized_and_cropped_img_bin = image_resize(img_bgr, height=256)
+    # return resized_and_cropped_img_bin
+    
+    # 大きい盤面
     return cv2.bitwise_not(cv2.inRange(
         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
 
