@@ -117,9 +117,9 @@ class AnimalTower(gym.Env):
 
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
-        a = [0, 4, 6, 8]
-        b = [150, 540, 929]
-        self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
+        r = [0, 4, 6, 8]
+        m = [150, 540, 929]
+        self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
         np.random.seed(0)
         np.random.shuffle(self.ACTION_MAP)
         self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
