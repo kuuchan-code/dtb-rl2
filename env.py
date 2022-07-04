@@ -120,6 +120,7 @@ class AnimalTower(gym.Env):
 
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
+<<<<<<< HEAD
         a = np.linspace(0, 11, 12, dtype=np.uint8)
         # b = [150, 540, 929]
         b = [540]
@@ -128,6 +129,14 @@ class AnimalTower(gym.Env):
         np.random.shuffle(self.ACTION_MAP)
         # print(self.ACTION_MAP)
         self.action_space = gym.spaces.Discrete(len(a)*len(b))
+=======
+        r = [0, 4, 6, 8]
+        m = [150, 540, 929]
+        self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
+        np.random.seed(0)
+        np.random.shuffle(self.ACTION_MAP)
+        self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
+>>>>>>> 2ac94929a6087d52aa48c95e73cac21fbf055ca4
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
@@ -195,7 +204,7 @@ class AnimalTower(gym.Env):
         sleep(0.7)
         # 変数の初期化
         done = False
-        reward = 0
+        reward = 0.0
         while True:
             self.driver.save_screenshot(SCREENSHOT_PATH)
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
