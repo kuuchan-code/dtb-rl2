@@ -121,14 +121,14 @@ class AnimalTower(gym.Env):
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
         np.random.seed(0)
-        a = np.linspace(0, 11, 10, dtype=np.uint8)
+        a = np.linspace(0, 11, 12, dtype=np.uint8)
         np.random.shuffle(a)
         # b = [150, 540, 929]
         b = np.linspace(440, 640, 3, dtype=np.uint32)
         np.random.shuffle(b)
         self.ACTION_MAP = np.array([v for v in itertools.product(a, b)])
         # print(self.ACTION_MAP)
-        self.action_space = gym.spaces.Discrete(12)
+        self.action_space = gym.spaces.Discrete(len(a)*len(b))
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
