@@ -133,7 +133,7 @@ class AnimalTower(gym.Env):
         np.random.seed(0)
         np.random.shuffle(self.ACTION_MAP)
         # print(self.ACTION_MAP)
-        self.action_space = gym.spaces.Discrete(len(a)*len(b))
+        self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
