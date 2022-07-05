@@ -161,7 +161,7 @@ class AnimalTowerBattleServer(threading.Thread):
         while self.running:
             # タスク消化
             while self.task_queue:
-                print(f"Server   :タスク一覧 {self.task_queue}")
+                print(f"Server   : タスク一覧 {self.task_queue}")
                 # 先頭のタスク取り出し
                 task = self.task_queue.pop(0)
                 # 回転と移動操作
@@ -241,8 +241,7 @@ class AnimalTowerBattleServer(threading.Thread):
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             self.prev_height = get_height(img_gray)
             self.prev_animal_count = get_animal_count(img_bgr)
-            # デバッグ
-            # print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
+        # 外から参照可能とする
         self.img_bgr = img_bgr
 
     def _apply_x8(self):
@@ -272,10 +271,11 @@ class AnimalTowerClient(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, dtb_server: AnimalTowerBattleServer, player, log_path="train.csv", log_episode_max=0x7fffffff):
+    def __init__(self, dtb_server: AnimalTowerBattleServer, player, log_path="train.csv", log_episode_max=0x7fffffff, verbose=2):
         self.player = player
         self.dtb_server = dtb_server
-        self._print_with_name("Initializing...")
+        self.verbose = verbose
+        self._print_with_name("Initializing...", 1)
 
         r = np.linspace(0, 11, 12, dtype=np.uint8)
         # b = [150, 540, 929]
@@ -306,7 +306,7 @@ class AnimalTowerClient(gym.Env):
         リセット
         2つのプレイヤーが同じコマンド送ってもいいや
         """
-        self._print_with_name("Resetting...")
+        self._print_with_name("Resetting...", 1)
         # リトライ申請
         self.dtb_server.add_task(("retry", self.player))
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
@@ -319,7 +319,7 @@ class AnimalTowerClient(gym.Env):
             self.prev_animal_count = get_animal_count(img_bgr)
             # デバッグ
             self._print_with_name(
-                f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
+                f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}", 2)
             sleep(1)
             if self.prev_height is None:
                 continue
@@ -329,9 +329,11 @@ class AnimalTowerClient(gym.Env):
             # 相手が初手で落としたら何もなかったことにする
             if self.prev_animal_count & 1 == self.dtb_server.get_turn(self.player):
                 break
+
         cv2.imwrite(self.obs_path, obs)
+
         t1 = time()
-        self._print_with_name(f"リセット所要時間 (後手の場合は初手含む): {t1 - self.t0:4.2f}秒")
+        self._print_with_name(f"リセット所要時間: {t1 - self.t0:4.2f}秒")
         self.t0 = t1
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
 
@@ -344,7 +346,7 @@ class AnimalTowerClient(gym.Env):
         if self.prev_animal_count & 1 != self.dtb_server.get_turn(self.player):
             obs, reward, done, _ = self._wait_for_my_turn()
         action = self.ACTION_MAP[action_index]
-        self._print_with_name(f"Action({action[0], action[1]})")
+        self._print_with_name(f"Action({action[0], action[1]})", 1)
         # 回転と移動
         self._rotate_and_move(action)
         sleep(0.7)
@@ -360,10 +362,10 @@ class AnimalTowerClient(gym.Env):
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
             self._print_with_name(
-                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
+                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}", 2)
             # 終端
             if is_result_screen(img_gray):
-                self._print_with_name("多分負け")
+                self._print_with_name("負け", 1)
                 done = True
                 reward = -1.0
                 with open(self.log_path, "a") as f:
@@ -435,10 +437,10 @@ class AnimalTowerClient(gym.Env):
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
             self._print_with_name(
-                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
+                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}", 2)
             # 終端
             if is_result_screen(img_gray):
-                self._print_with_name("多分勝ち")
+                self._print_with_name("勝ち", 1)
                 done = True
                 reward = 1.0
                 with open(self.log_path, "a") as f:
@@ -464,12 +466,13 @@ class AnimalTowerClient(gym.Env):
         cv2.imwrite(self.obs_path, obs)
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
 
-    def _print_with_name(self, moji: str):
+    def _print_with_name(self, moji: str, verbose=2):
         """
         文字列をプレイヤー名と一緒に出力
         引数はひとつだけ
         """
-        print(f"Player({self.player}): {moji}")
+        if verbose <= self.verbose:
+            print(f"Player({self.player}): {moji}")
 
 
 class AnimalTowerBattleLearning(threading.Thread):
@@ -477,11 +480,12 @@ class AnimalTowerBattleLearning(threading.Thread):
     学習のためのスレッド
     """
 
-    def __init__(self, dtb_server, player):
+    def __init__(self, dtb_server, player, verbose=2):
         super(AnimalTowerBattleLearning, self).__init__()
 
         name_prefix = f"_a2c_cnn_r12m3s_p{player}"
-        env = AnimalTowerClient(dtb_server, player, f"{name_prefix}.csv")
+        env = AnimalTowerClient(
+            dtb_server, player, f"{name_prefix}.csv", verbose=1)
 
         self.model = A2C(policy="CnnPolicy", env=env,
                          verbose=1, tensorboard_log="tensorboard")
@@ -509,8 +513,9 @@ if __name__ == "__main__":
         # サーバ開始
         dtb_server.start()
         print(threading.enumerate())
-        l1 = AnimalTowerBattleLearning(dtb_server, 0)
-        l2 = AnimalTowerBattleLearning(dtb_server, 1)
+        verbose = 1
+        l1 = AnimalTowerBattleLearning(dtb_server, 0, verbose=verbose)
+        l2 = AnimalTowerBattleLearning(dtb_server, 1, verbose=verbose)
         l1.start()
         print(threading.enumerate())
         l2.start()
