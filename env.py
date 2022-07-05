@@ -143,7 +143,7 @@ class AnimalTower(gym.Env):
             "appium:connectHardwareKeyboard": True
         }
         self.driver = webdriver.Remote(
-            "http://localhost:4723/wd/hub", caps)
+            "http://localhost_main:4723/wd/hub", caps)
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
