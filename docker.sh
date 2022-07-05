@@ -20,5 +20,8 @@ pull rayproject/ray:latest-gpu
 # python3 dtb-rl2/test/is_gpu_available.py
 # python3 dtb-rl2/test/rllib.py
 
+# OpenCVを動かすの
+# sudo apt update
+# sudo apt install libgl1-mesa-dev libopencv-dev
 
 # sudo docker run --network host -it --runtime=nvidia --shm-size=2.41gb --add-host=localhost_main:127.0.0.1 -v ~/dtb-rl2:/home/ray/dtb-rl2 rayproject/ray:latest-gpu-tensorflow
