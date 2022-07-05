@@ -14,6 +14,8 @@ from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.actions.pointer_input import PointerInput
 from selenium.webdriver.common.actions import interaction
 import threading
+from stable_baselines3 import A2C
+from stable_baselines3.common.callbacks import CheckpointCallback
 
 
 SCREENSHOT_PATH = "./screenshot.png"
@@ -122,13 +124,13 @@ def is_off_x8(img_gray):
     return res.max() >= TEMPLATE_MATCHING_THRESHOLD
 
 
-class AnimalTowerServer(threading.Thread):
+class AnimalTowerBattleServer(threading.Thread):
     """
     端末を動かすためのスレッド
     """
 
     def __init__(self):
-        super(AnimalTowerServer, self).__init__()
+        super(AnimalTowerBattleServer, self).__init__()
         print("Appium設定中")
         caps = {
             "platformName": "android",
@@ -143,14 +145,107 @@ class AnimalTowerServer(threading.Thread):
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
         self.running = False
+        self.img_bgr = None
+        # タスクを溜めるバッファ
+        self.task_queue = []
 
     def run(self):
         """
         実行部分
         """
         self.running = True
+        # 停止まで無限ループ
         while self.running:
+            # タスク消化
+            while self.task_queue:
+                # 先頭のタスク取り出し
+                task = self.task_queue.pop(0)
+                # 回転と移動操作
+                if task[0] == "rotate_move":
+                    self._rotate_and_move(task[1])
+                elif task[0] == "apply_x8":
+                    self._apply_x8()
+                elif task[0] == "retry":
+                    self._retry()
+            # ひたすらスクショ
             self.driver.save_screenshot(SCREENSHOT_PATH)
+            # bgr画像をメモリにロード
+            # 画像処理はクライアント側に任せる
+            self.img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+
+    def get_image(self):
+        """
+        bgrのスクショを返す
+        """
+        return self.img_bgr
+
+    def add_task(self, task: tuple):
+        """
+        タスクを追加
+        """
+        print(task)
+        self.task_queue.append(task)
+
+    def _tap(self, coordinates):
+        """
+        タップ
+        """
+        self.operations.w3c_actions.pointer_action.move_to_location(
+            *coordinates)
+        self.operations.w3c_actions.pointer_action.click()
+        self.operations.w3c_actions.pointer_action.pause(0.05)
+        self.operations.perform()
+
+    def _rotate_and_move(self, a):
+        """
+        回転と移動
+        """
+        if a[0] > 0:
+            # 回転タップ
+            self.operations.w3c_actions.pointer_action.move_to_location(
+                *COORDINATES_ROTATE30)
+            for _ in range(a[0]):
+                self.operations.w3c_actions.pointer_action.click()
+                self.operations.w3c_actions.pointer_action.pause(0.05)
+            # まとめて適用
+            self.operations.w3c_actions.perform()
+        # 座標タップ
+        self.operations.w3c_actions.pointer_action.move_to_location(
+            a[1], 800)
+        self.operations.w3c_actions.pointer_action.click()
+        # 適用
+        self.operations.w3c_actions.perform()
+
+    def _retry(self):
+        """
+        リセットするまでずっとここにいる
+        """
+        self.prev_height = None
+        self.prev_animal_count = None
+        # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
+        while self.prev_height is None or self.prev_animal_count is None:
+            # リトライボタンをタップして少し待つ
+            self._tap(COORDINATES_RETRY)
+            sleep(0.5)
+            # リセットが確認できるまでスクショ
+            self.driver.save_screenshot(SCREENSHOT_PATH)
+            # サーバから画像取得
+            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+            img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            self.prev_height = get_height(img_gray)
+            self.prev_animal_count = get_animal_count(img_bgr)
+            # デバッグ
+            # print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
+        self.img_bgr = img_bgr
+
+    def _apply_x8(self):
+        """
+        x8 speeder の適用
+        """
+        self._tap((1032, 1857))
+        sleep(0.5)
+        self._tap((726, 1171))
+        sleep(5)
 
     def stop(self):
         """
@@ -159,17 +254,18 @@ class AnimalTowerServer(threading.Thread):
         self.running = False
 
 
-class AnimalTower(gym.Env):
+class AnimalTowerClient(gym.Env):
     """
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, player, log_path="train.csv", log_episode_max=0x7fffffff):
+    def __init__(self, dtb_server: AnimalTowerBattleServer, player, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
         r = np.linspace(0, 11, 12, dtype=np.uint8)
         # b = [150, 540, 929]
         m = np.linspace(440, 640, 3, dtype=np.uint32)
         self.player = player
+        self.dtb_server = dtb_server
         self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
         np.random.seed(0)
         np.random.shuffle(self.ACTION_MAP)
@@ -177,18 +273,6 @@ class AnimalTower(gym.Env):
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
-        caps = {
-            "platformName": "android",
-            "appium:ensureWebviewHavePages": True,
-            "appium:nativeWebScreenshot": True,
-            "appium:newCommandTimeout": 3600,
-            "appium:connectHardwareKeyboard": True
-        }
-        self.driver = webdriver.Remote(
-            "http://localhost:4723/wd/hub", caps)
-        self.operations = ActionChains(self.driver)
-        self.operations.w3c_actions = ActionBuilder(
-            self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
 
         self.log_path = log_path
         self.episode_count = 0
@@ -208,22 +292,21 @@ class AnimalTower(gym.Env):
         リセット
         """
         print("Resetting...", end=" ", flush=True)
+        self.dtb_server.add_task(("retry", self.player))
         self.prev_height = None
         self.prev_animal_count = None
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
         while self.prev_height is None or self.prev_animal_count is None:
-            # リトライボタンをタップして3秒待つ
-            self._tap(COORDINATES_RETRY)
-            sleep(0.5)
-            self.driver.save_screenshot(SCREENSHOT_PATH)
-            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
-            obs = to_training_image(img_bgr)
+            # サーバから画像取得
+            img_bgr = self.dtb_server.get_image()
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            obs = to_training_image(img_bgr)
             self.prev_height = get_height(img_gray)
             self.prev_animal_count = get_animal_count(img_bgr)
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
+            sleep(0.5)
         print("Done")
         t1 = time()
         print(f"リセット所要時間: {t1 - self.t0:4.2f}秒")
@@ -234,16 +317,6 @@ class AnimalTower(gym.Env):
         """
         1アクション
         """
-        self.driver.save_screenshot(SCREENSHOT_PATH)
-        img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
-        animal_count = get_animal_count(img_bgr)
-        while animal_count is None or animal_count % 2 != int(self.player[-1])-1:
-            print(f"{self.player}待機中...")
-            self.driver.save_screenshot(SCREENSHOT_PATH)
-            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
-            img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-            animal_count = get_animal_count(img_bgr)
-            sleep(10)
         action = self.ACTION_MAP[action_index]
         print(f"Action({action[0], action[1]})")
         # 回転と移動
@@ -253,17 +326,14 @@ class AnimalTower(gym.Env):
         done = False
         reward = 0.0
         while True:
-            self.driver.save_screenshot(SCREENSHOT_PATH)
-            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
-            obs = to_training_image(img_bgr)
+            # サーバから取得
+            img_bgr = self.dtb_server.get_image()
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            obs = to_training_image(img_bgr)
             if is_off_x8(img_gray):
                 print("x8 speederを適用")
-                self._tap((1032, 1857))
-                sleep(0.5)
-                self._tap((726, 1171))
-                sleep(5)
-                continue
+                self.dtb_server.add_task(("apply_x8", self.player))
+                sleep(1)
             # ループで必ず高さと動物数を取得
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
@@ -312,41 +382,29 @@ class AnimalTower(gym.Env):
         """
         Tap
         """
-        self.operations.w3c_actions.pointer_action.move_to_location(
-            *coordinates)
-        self.operations.w3c_actions.pointer_action.click()
-        self.operations.w3c_actions.pointer_action.pause(0.05)
-        self.operations.perform()
+        self.dtb_server.add_task(("tap", coordinates))
 
     def _rotate_and_move(self, a: np.ndarray) -> None:
         """
         高速化のために回転と移動を同時に操作
         """
-        # 回転タップ
-        self.operations.w3c_actions.pointer_action.move_to_location(
-            *COORDINATES_ROTATE30)
-        for _ in range(a[0]):
-            self.operations.w3c_actions.pointer_action.click()
-            self.operations.w3c_actions.pointer_action.pause(0.05)
-        self.operations.w3c_actions.perform()
-        # 座標タップ
-        self.operations.w3c_actions.pointer_action.move_to_location(
-            a[1], 800)
-        self.operations.w3c_actions.pointer_action.click()
-        # 適用
-        self.operations.w3c_actions.perform()
+        self.dtb_server.add_task(("rotate_move", a))
 
 
 if __name__ == "__main__":
     print(threading.enumerate())
-    dtb_server = AnimalTowerServer()
+    dtb_server = AnimalTowerBattleServer()
     try:
         dtb_server.start()
         print(threading.enumerate())
-        for i in range(10):
-            print(i)
-            print(dtb_server.is_alive())
-            sleep(1)
+        name_prefix = "_a2c_cnn_rotate12_move5_bin"
+        env = AnimalTowerClient(dtb_server, 0, name_prefix+".csv")
+        model = A2C(policy='CnnPolicy', env=env,
+                    verbose=1, tensorboard_log="tensorboard")
+        checkpoint_callback = CheckpointCallback(save_freq=100, save_path='models',
+                                                 name_prefix=name_prefix)
+        model.learn(total_timesteps=10000, callback=[checkpoint_callback])
+
     except Exception as e:
         raise e
     finally:
