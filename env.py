@@ -280,14 +280,16 @@ class AnimalTower(gym.Env):
         移動の前にperformをしないとバグる
         """
         # 回転タップ
-        self.operations.w3c_actions.pointer_action.move_to_location(
-            *COORDINATES_ROTATE30)
-        for _ in range(a[0]):
-            self.operations.w3c_actions.pointer_action.click()
-            # 試した感じ0.05がバグらない最低値
-            self.operations.w3c_actions.pointer_action.pause(0.05)
-        # 重要
-        self.operations.w3c_actions.perform()
+        # 0回転は処理を短縮
+        if a[0] > 0:
+            self.operations.w3c_actions.pointer_action.move_to_location(
+                *COORDINATES_ROTATE30)
+            for _ in range(a[0]):
+                self.operations.w3c_actions.pointer_action.click()
+                # 試した感じ0.05がバグらない最低値
+                self.operations.w3c_actions.pointer_action.pause(0.05)
+            # 重要
+            self.operations.w3c_actions.perform()
         # 座標タップ
         self.operations.w3c_actions.pointer_action.move_to_location(
             a[1], 800)

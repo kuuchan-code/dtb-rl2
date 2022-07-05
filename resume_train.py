@@ -18,13 +18,17 @@ print(f"{name_prefix}_{now_str}.csv")
 env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv")
 
 # 最新のモデルを読み込むように
-# model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
-model_path = "models/a2c_cnn_rotate_move11_bin_1950_steps.zip"
+model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
+# model_path = "models/a2c_cnn_rotate_move11_bin_1950_steps.zip"
 
 model = A2C.load(path=model_path,
                  env=env, tensorboard_log="tensorboard")
 print(f"Loaded {model_path}")
 
+
 checkpoint_callback = CheckpointCallback(save_freq=50, save_path="models",
                                          name_prefix=name_prefix)
-model.learn(total_timesteps=10000, callback=[checkpoint_callback])
+try:
+    model.learn(total_timesteps=10000, callback=[checkpoint_callback])
+except KeyboardInterrupt as e:
+    print("キーボード割り込み")
