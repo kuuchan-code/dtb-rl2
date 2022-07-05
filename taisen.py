@@ -289,6 +289,9 @@ class AnimalTowerClient(gym.Env):
         self.log_path = log_path
         self.episode_count = 0
         self.log_episode_max = log_episode_max
+
+        self.obs_path = f"./observation_p{self.player}.png"
+
         # ヘッダのみ書き込み
         with open(self.log_path, "w") as f:
             print(f"animals,height", file=f)
@@ -301,6 +304,7 @@ class AnimalTowerClient(gym.Env):
     def reset(self) -> np.ndarray:
         """
         リセット
+        2つのプレイヤーが同じコマンド送ってもいいや
         """
         print("Resetting...")
         # リトライ申請
@@ -313,7 +317,7 @@ class AnimalTowerClient(gym.Env):
             obs = to_training_image(img_bgr)
             self.prev_height = get_height(img_gray)
             self.prev_animal_count = get_animal_count(img_bgr)
-            cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+            cv2.imwrite(self.obs_path, obs)
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
             sleep(1)
@@ -355,7 +359,7 @@ class AnimalTowerClient(gym.Env):
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
             print(
-                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
+                f"Player({self.player}), 動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
             # 終端
             if is_result_screen(img_gray):
                 print("多分負け")
@@ -382,17 +386,18 @@ class AnimalTowerClient(gym.Env):
         self.prev_height = height
         self.prev_animal_count = animal_count
 
-        t1 = time()
         # 自分のターン待ち
         # 相手の行動後の状態を観測値とする
         if done:
-            cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+            cv2.imwrite(self.obs_path, obs)
             obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
         elif self.prev_animal_count & 1 != self.dtb_server.get_turn(self.player):
             obs_3d, reward, done, _ = self._wait_for_my_turn()
 
-        self.t0 = t1
+        t1 = time()
         print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
+        self.t0 = t1
+
         print(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
         return obs_3d, reward, done, {}
@@ -416,7 +421,7 @@ class AnimalTowerClient(gym.Env):
         """
         自分のターンを待つ
         """
-        print("待機中")
+        print(f"Player({self.player}) 待機中")
         # 変数の初期化
         reward = 0.0
         done = False
@@ -429,7 +434,7 @@ class AnimalTowerClient(gym.Env):
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
             print(
-                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
+                f"Player({self.player}), 動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
             # 終端
             if is_result_screen(img_gray):
                 print("多分勝ち")
@@ -455,7 +460,7 @@ class AnimalTowerClient(gym.Env):
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
-        cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        cv2.imwrite(self.obs_path, obs)
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
 
 
@@ -467,7 +472,7 @@ class AnimalTowerBattleLearning(threading.Thread):
     def __init__(self, dtb_server, player):
         super(AnimalTowerBattleLearning, self).__init__()
 
-        name_prefix = f"_a2c_cnn_r12m3s_{player}"
+        name_prefix = f"_a2c_cnn_r12m3s_p{player}"
         env = AnimalTowerClient(dtb_server, player, f"{name_prefix}.csv")
 
         self.model = A2C(policy="CnnPolicy", env=env,
@@ -501,7 +506,7 @@ if __name__ == "__main__":
         print(threading.enumerate())
         for i in range(1000000):
             print(i)
-            sleep(1)
+            sleep(10)
 
     except Exception as e:
         raise e
