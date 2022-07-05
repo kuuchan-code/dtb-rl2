@@ -22,4 +22,4 @@
 
 
 # memo
-# sudo docker run -t -i --runtime=nvidia --shm-size=2.41gb --add-host=localhost_main:192.168.0.227  -v ~/dtb-rl2:/home/ray/dtb-rl2 test
+sudo docker run --network host -p 8265:8265 -t -i --runtime=nvidia --shm-size=2.41gb --add-host=localhost_main:192.168.0.227  -v ~/dtb-rl2:/home/ray/dtb-rl2 test
