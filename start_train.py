@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import gym, ray
-from ray.rllib.agents import ppo
+from ray.rllib.agents import dqn
 from env import AnimalTower
 
 
@@ -12,8 +12,8 @@ def env_creator(env_config):
 register_env("my_env", env_creator)
 
 ray.init()
-trainer = ppo.PPOTrainer(env="my_env", config={
-    "env_config": {},  # config to pass to env class
+trainer = dqn.DQNTrainer(env="my_env", config={
+    "env_config": {"n_step": 1, "noisy": True, "num_atoms": 2, "v_min": -10.0, "v_max": 10.0},
     "num_workers": 1,
 })
 
