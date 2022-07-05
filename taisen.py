@@ -305,10 +305,8 @@ class AnimalTowerClient(gym.Env):
         print("Resetting...")
         # リトライ申請
         self.dtb_server.add_task(("retry", self.player))
-        self.prev_height = None
-        self.prev_animal_count = None
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
-        while self.prev_height is None or self.prev_animal_count is None:
+        while True:
             # サーバから画像取得
             img_bgr = self.dtb_server.get_image()
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
@@ -319,6 +317,14 @@ class AnimalTowerClient(gym.Env):
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
             sleep(1)
+            if self.prev_height is None:
+                continue
+            if self.prev_animal_count is None:
+                continue
+            # 自分のターンまでゆっくり待つ
+            # 相手が初手で落としたら何もなかったことにする
+            if self.prev_animal_count & 1 == self.dtb_server.get_turn(self.player):
+                break
         t1 = time()
         print(f"リセット所要時間: {t1 - self.t0:4.2f}秒")
         self.t0 = t1
@@ -329,10 +335,9 @@ class AnimalTowerClient(gym.Env):
         1アクション
         """
         # 自分のターン待ち
+        # 相手の行動後の状態を観測値とする
         if self.prev_animal_count & 1 != self.dtb_server.get_turn(self.player):
             obs, reward, done, _ = self._wait_for_my_turn()
-            if done:
-                obs, reward, done, {}
         action = self.ACTION_MAP[action_index]
         print(f"Action({action[0], action[1]})")
         # 回転と移動
@@ -358,8 +363,6 @@ class AnimalTowerClient(gym.Env):
                 reward = -1.0
                 with open(self.log_path, "a") as f:
                     print(f"{self.prev_animal_count},{self.prev_height}", file=f)
-                self.episode_count += 1
-                assert self.episode_count < self.log_episode_max, f"エピソード{self.log_episode_max}到達"
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
@@ -378,14 +381,21 @@ class AnimalTowerClient(gym.Env):
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
-        # 共通処理
-        cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+
         t1 = time()
-        print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
+        # 自分のターン待ち
+        # 相手の行動後の状態を観測値とする
+        if done:
+            cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+            obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
+        elif self.prev_animal_count & 1 != self.dtb_server.get_turn(self.player):
+            obs_3d, reward, done, _ = self._wait_for_my_turn()
+
         self.t0 = t1
+        print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
         print(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
-        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
+        return obs_3d, reward, done, {}
 
     def render(self):
         pass
@@ -427,8 +437,6 @@ class AnimalTowerClient(gym.Env):
                 reward = 1.0
                 with open(self.log_path, "a") as f:
                     print(f"{self.prev_animal_count},{self.prev_height}", file=f)
-                self.episode_count += 1
-                assert self.episode_count < self.log_episode_max, f"エピソード{self.log_episode_max}到達"
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
@@ -447,13 +455,7 @@ class AnimalTowerClient(gym.Env):
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
-        # 共通処理
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-        t1 = time()
-        print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
-        self.t0 = t1
-        print(f"return obs, {reward}, {done}, {{}}")
-        print("-"*NUM_OF_DELIMITERS)
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
 
 
@@ -464,10 +466,9 @@ class AnimalTowerBattleLearning(threading.Thread):
 
     def __init__(self, dtb_server, player):
         super(AnimalTowerBattleLearning, self).__init__()
-        self.player = player
 
-        name_prefix = f"_a2c_cnn_r12m3s_{self.player}"
-        env = AnimalTowerClient(dtb_server, 0, f"{name_prefix}.csv")
+        name_prefix = f"_a2c_cnn_r12m3s_{player}"
+        env = AnimalTowerClient(dtb_server, player, f"{name_prefix}.csv")
 
         self.model = A2C(policy="CnnPolicy", env=env,
                          verbose=1, tensorboard_log="tensorboard")
@@ -493,11 +494,13 @@ if __name__ == "__main__":
         dtb_server.start()
         print(threading.enumerate())
         l1 = AnimalTowerBattleLearning(dtb_server, 0)
+        l2 = AnimalTowerBattleLearning(dtb_server, 1)
         l1.start()
         print(threading.enumerate())
-
-        while True:
-            print("あいうえお")
+        l2.start()
+        print(threading.enumerate())
+        for i in range(1000000):
+            print(i)
             sleep(1)
 
     except Exception as e:
