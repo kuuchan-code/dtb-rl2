@@ -14,7 +14,7 @@
 # sudo docker commit コンテナID rayproject/ray:latest-gpu-tensorflow
 
 # run rayproject/ray:latest-gpu-tensorflow
-# sudo docker run -t -i --runtime=nvidia --shm-size=2.41gb -v ~/dtb-rl2:/home/ray/dtb-rl2 rayproject/ray:latest-gpu-tensorflow
+sudo docker run -t -i --runtime=nvidia --shm-size=2.41gb -v ~/dtb-rl2:/home/ray/dtb-rl2 rayproject/ray:latest-gpu-tensorflow
 
 # tensorflow with gpuとrllilbの動作確認(in the docker)
 # python3 dtb-rl2/test/is_gpu_available.py
