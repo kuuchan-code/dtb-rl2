@@ -17,7 +17,7 @@ from selenium.webdriver.common.actions import interaction
 import threading
 from stable_baselines3 import A2C
 from stable_baselines3.common.callbacks import CheckpointCallback
-import ctypes
+import random as rd
 
 
 SCREENSHOT_PATH = "./screenshot.png"
@@ -265,8 +265,10 @@ class AnimalTowerBattleServer(threading.Thread):
             self.prev_animal_count = get_animal_count(img_bgr)
         # 外から参照可能とする
         self.img_bgr = img_bgr
-        print("Server   : リセット完了")
+        # rd.shuffle(self.turns)
         print("-"*NUM_OF_DELIMITERS)
+        print(f"Server   : ターンリセット{self.turns}")
+        # print("Server   : リセット完了")
 
     def _apply_x8(self):
         """
@@ -308,7 +310,7 @@ class AnimalTowerBattleClient(gym.Env):
         with open(self.log_path, "w") as f:
             print(f"animals,height", file=f)
 
-        print("-"*NUM_OF_DELIMITERS)
+        # print("-"*NUM_OF_DELIMITERS)
 
         # 時間計測用
         self.t0 = time()
@@ -359,7 +361,7 @@ class AnimalTowerBattleClient(gym.Env):
             obs, reward, done, _ = self._wait_for_my_turn()
         action = self.ACTION_MAP[action_index]
         self._print_with_name(
-            f"Action({action_index}/{self.ACTION_MAP.shape[0]-1}){action[0], action[1]}", 1)
+            f"ActionID: ({action_index}/{self.ACTION_MAP.shape[0]-1}), Action: {action[0], action[1]}", 1)
         # 回転と移動
         self.dtb_server.add_task((self.player, "rotate_move", action))
         sleep(0.7)
@@ -414,7 +416,7 @@ class AnimalTowerBattleClient(gym.Env):
         self._print_with_name(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
         self.t0 = t1
 
-        self._print_with_name(f"return obs, {reward}, {done}, {{}}")
+        self._print_with_name(f"return obs, {reward}, {done}, {{}}", 1)
         return obs_3d, reward, done, {}
 
     def render(self):
@@ -508,27 +510,6 @@ class AnimalTowerBattleLearning(threading.Thread):
         finally:
             print("学習停止")
 
-    def get_id(self):
-        """
-        スレッドのID取得
-        """
-        if hasattr(self, "_thread_id"):
-            return self._thread_id
-        for id, thread in threading._active.items():
-            if thread is self:
-                return id
-
-    def raise_exception(self):
-        """
-        例外処理?
-        """
-        thread_id = self.get_id()
-        resu = ctypes.pythonapi.PyThreadState_SetAsyncExc(
-            thread_id, ctypes.py_object(SystemExit))
-        if resu > 1:
-            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
-            print("Failure in raising exception")
-
 
 if __name__ == "__main__":
     # print(threading.enumerate())
@@ -537,18 +518,20 @@ if __name__ == "__main__":
         # サーバ開始
         dtb_server.start()
         print(threading.enumerate())
-        verbose = 1
+        verbose = 2
 
         learning_list = []
         for i in range(2):
             dtb_learning = AnimalTowerBattleLearning(
                 dtb_server, i, verbose=verbose)
+            # デーモンをセットすることで止まるらしい
+            dtb_learning.setDaemon(True)
             dtb_learning.start()
             learning_list.append(dtb_learning)
 
         # メインは謎のループ
         for i in range(1000000):
-            sleep(10)
+            sleep(300)
             print(datetime.now())
 
     except Exception as e:
@@ -557,7 +540,5 @@ if __name__ == "__main__":
     finally:
         print("最後")
         dtb_server.stop()
-        for l in learning_list:
-            l.raise_exception()
 
     print(threading.enumerate())
