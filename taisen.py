@@ -23,7 +23,7 @@ OBSERVATION_IMAGE_PATH = "./observation.png"
 TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.984
 TRAINNING_IMAGE_SIZE = 256, 75  # small
-TRAINNING_IMAGE_SIZE = 256, 144  # big
+# TRAINNING_IMAGE_SIZE = 256, 144  # big
 NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
 COORDINATES_ROTATE30 = 500, 1800
@@ -105,7 +105,7 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
         img_bgr, BACKGROUND_COLOR_DARK, WHITE))
     cropped_img_bin = img_bin[:1665, 295:785]
     resized_and_cropped_img_bin = cv2.resize(
-        cropped_img_bin, TRAINNING_IMAGE_SIZE)
+        cropped_img_bin, TRAINNING_IMAGE_SIZE[::-1])
     return resized_and_cropped_img_bin
 
     # 大きい盤面
@@ -186,7 +186,7 @@ class AnimalTowerBattleServer(threading.Thread):
         """
         タスクを追加
         """
-        print(task)
+        # print(task)
         self.task_queue.append(task)
 
     def _tap(self, coordinates):
@@ -264,14 +264,13 @@ class AnimalTowerClient(gym.Env):
 
     def __init__(self, dtb_server: AnimalTowerBattleServer, player, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
+        self.player = player
+        self.dtb_server = dtb_server
+
         r = np.linspace(0, 11, 12, dtype=np.uint8)
         # b = [150, 540, 929]
         m = np.linspace(440, 640, 3, dtype=np.uint32)
-        self.player = player
-        self.dtb_server = dtb_server
         self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
-        np.random.seed(0)
-        np.random.shuffle(self.ACTION_MAP)
         self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
@@ -361,7 +360,7 @@ class AnimalTowerClient(gym.Env):
                 print("No height update")
                 reward = 1.0
                 break
-            sleep(0.1)
+            sleep(1)
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
