@@ -1,3 +1,2 @@
-stable_baselines3
 opencv-python
 Appium-Python-Client
