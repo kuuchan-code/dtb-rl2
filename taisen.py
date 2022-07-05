@@ -113,14 +113,13 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     #     cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
 
 
-def is_off_x8(img_gray):
+def is_off_x8(img_bgr: np.ndarray) -> bool:
     """
     x8の停止を検知
     """
-    template = cv2.imread("src/x8_start.png", 0)
+    template = cv2.imread("src/x8_start.png", 1)
     res = cv2.matchTemplate(
-        img_gray, template, cv2.TM_CCOEFF_NORMED)
-    # print(res.max())
+        img_bgr, template, cv2.TM_CCOEFF_NORMED)
     return res.max() >= TEMPLATE_MATCHING_THRESHOLD
 
 
@@ -158,6 +157,7 @@ class AnimalTowerBattleServer(threading.Thread):
         while self.running:
             # タスク消化
             while self.task_queue:
+                print(self.task_queue)
                 # 先頭のタスク取り出し
                 task = self.task_queue.pop(0)
                 # 回転と移動操作
@@ -172,6 +172,9 @@ class AnimalTowerBattleServer(threading.Thread):
             # bgr画像をメモリにロード
             # 画像処理はクライアント側に任せる
             self.img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+            if is_off_x8(self.img_bgr):
+                print("x8 speederを適用 (サーバ自己判断)")
+                self.add_task(("apply_x8", "server"))
 
     def get_image(self):
         """
@@ -330,10 +333,6 @@ class AnimalTowerClient(gym.Env):
             img_bgr = self.dtb_server.get_image()
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             obs = to_training_image(img_bgr)
-            if is_off_x8(img_gray):
-                print("x8 speederを適用")
-                self.dtb_server.add_task(("apply_x8", self.player))
-                sleep(1)
             # ループで必ず高さと動物数を取得
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
@@ -395,6 +394,7 @@ if __name__ == "__main__":
     print(threading.enumerate())
     dtb_server = AnimalTowerBattleServer()
     try:
+        # サーバ開始
         dtb_server.start()
         print(threading.enumerate())
         name_prefix = "_a2c_cnn_rotate12_move5_bin"
@@ -407,6 +407,7 @@ if __name__ == "__main__":
 
     except Exception as e:
         raise e
+    # 別スレッドを停止させるため
     finally:
         print("最後")
         dtb_server.stop()
