@@ -18,7 +18,7 @@ SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
 TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.984
-TRAINNING_IMAGE_SIZE = 256, 75  # small
+# TRAINNING_IMAGE_SIZE = 256, 75  # small
 TRAINNING_IMAGE_SIZE = 256, 144  # big
 NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
@@ -133,7 +133,7 @@ class AnimalTower(gym.Env):
         np.random.shuffle(self.ACTION_MAP)
         self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
         self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
+            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
         caps = {
             "platformName": "android",
@@ -186,7 +186,7 @@ class AnimalTower(gym.Env):
         t1 = time()
         print(f"リセット所要時間: {t1 - self.t0:4.2f}秒")
         self.t0 = t1
-        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
+        return obs
 
     def step(self, action_index) -> tuple[np.ndarray, float, bool, dict]:
         """
@@ -249,7 +249,7 @@ class AnimalTower(gym.Env):
         self.t0 = t1
         print(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
-        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
+        return obs, reward, done, {}
 
     def render(self):
         pass

@@ -14,7 +14,7 @@ register_env("my_env", env_creator)
 ray.init()
 trainer = ppo.PPOTrainer(env="my_env", config={
     "env_config": {},  # config to pass to env class
-    "num_workers": 1
+    "num_workers": 1,
 })
 
 while True:
