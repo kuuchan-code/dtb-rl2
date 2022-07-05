@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Deep reinforcement learning on the small base of the Animal Tower.
 """
@@ -12,6 +13,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.actions.pointer_input import PointerInput
 from selenium.webdriver.common.actions import interaction
+import threading
 
 
 SCREENSHOT_PATH = "./screenshot.png"
@@ -118,6 +120,43 @@ def is_off_x8(img_gray):
         img_gray, template, cv2.TM_CCOEFF_NORMED)
     # print(res.max())
     return res.max() >= TEMPLATE_MATCHING_THRESHOLD
+
+
+class AnimalTowerServer(threading.Thread):
+    """
+    端末を動かすためのスレッド
+    """
+
+    def __init__(self):
+        super(AnimalTowerServer, self).__init__()
+        print("Appium設定中")
+        caps = {
+            "platformName": "android",
+            "appium:ensureWebviewHavePages": True,
+            "appium:nativeWebScreenshot": True,
+            "appium:newCommandTimeout": 3600,
+            "appium:connectHardwareKeyboard": True
+        }
+        self.driver = webdriver.Remote("http://localhost:4723/wd/hub", caps)
+        # 操作
+        self.operations = ActionChains(self.driver)
+        self.operations.w3c_actions = ActionBuilder(
+            self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
+        self.running = False
+
+    def run(self):
+        """
+        実行部分
+        """
+        self.running = True
+        while self.running:
+            self.driver.save_screenshot(SCREENSHOT_PATH)
+
+    def stop(self):
+        """
+        停止
+        """
+        self.running = False
 
 
 class AnimalTower(gym.Env):
@@ -296,3 +335,21 @@ class AnimalTower(gym.Env):
         self.operations.w3c_actions.pointer_action.click()
         # 適用
         self.operations.w3c_actions.perform()
+
+
+if __name__ == "__main__":
+    print(threading.enumerate())
+    dtb_server = AnimalTowerServer()
+    try:
+        dtb_server.start()
+        print(threading.enumerate())
+        for i in range(10):
+            print(i)
+            print(dtb_server.is_alive())
+            sleep(1)
+    except Exception as e:
+        raise e
+    finally:
+        print("最後")
+        dtb_server.stop()
+    print(threading.enumerate())
