@@ -167,7 +167,7 @@ class AnimalTowerBattleServer(threading.Thread):
             self.img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
             if is_off_x8(self.img_bgr):
                 print("Server   : x8 speederを適用")
-                self.add_task(("apply_x8", "server"))
+                self.add_task(("server", "apply_x8"))
 
     def get_image(self):
         """
@@ -178,6 +178,7 @@ class AnimalTowerBattleServer(threading.Thread):
     def add_task(self, task: tuple):
         """
         タスクを追加
+        (送信元, タスク名, その他)
         """
         # print(task)
         self.task_queue.append(task)
@@ -199,15 +200,15 @@ class AnimalTowerBattleServer(threading.Thread):
         first_retry = True
         # タスク消化
         while self.task_queue:
-            # print(f"Server   : タスク一覧 {self.task_queue}")
+            print(f"Server   : タスク一覧 {self.task_queue}")
             # 先頭のタスク取り出し
             task = self.task_queue.pop(0)
             # 回転と移動操作
-            if task[0] == "rotate_move":
-                self._rotate_and_move(task[1])
-            elif task[0] == "apply_x8":
+            if task[1] == "rotate_move":
+                self._rotate_and_move(task[2])
+            elif task[1] == "apply_x8":
                 self._apply_x8()
-            elif task[0] == "retry":
+            elif task[1] == "retry":
                 if first_retry:
                     self._retry()
                     first_retry = False
@@ -264,6 +265,8 @@ class AnimalTowerBattleServer(threading.Thread):
             self.prev_animal_count = get_animal_count(img_bgr)
         # 外から参照可能とする
         self.img_bgr = img_bgr
+        print("Server   : リセット完了")
+        print("-"*NUM_OF_DELIMITERS)
 
     def _apply_x8(self):
         """
@@ -275,12 +278,12 @@ class AnimalTowerBattleServer(threading.Thread):
         sleep(5)
 
 
-class AnimalTowerClient(gym.Env):
+class AnimalTowerBattleClient(gym.Env):
     """
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, dtb_server: AnimalTowerBattleServer, player, log_path="train.csv", log_episode_max=0x7fffffff, verbose=2):
+    def __init__(self, dtb_server: AnimalTowerBattleServer, player: int, log_path="train.csv", log_episode_max=0x7fffffff, verbose=2):
         self.player = player
         self.dtb_server = dtb_server
         self.verbose = verbose
@@ -317,7 +320,7 @@ class AnimalTowerClient(gym.Env):
         """
         self._print_with_name("Resetting...", 1)
         # リトライ申請
-        self.dtb_server.add_task(("retry", self.player))
+        self.dtb_server.add_task((self.player, "retry"))
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
         while True:
             # サーバから画像取得
@@ -358,7 +361,7 @@ class AnimalTowerClient(gym.Env):
         self._print_with_name(
             f"Action({action_index}/{self.ACTION_MAP.shape[0]-1}){action[0], action[1]}", 1)
         # 回転と移動
-        self._rotate_and_move(action)
+        self.dtb_server.add_task((self.player, "rotate_move", action))
         sleep(0.7)
         # 変数の初期化
         done = False
@@ -412,23 +415,10 @@ class AnimalTowerClient(gym.Env):
         self.t0 = t1
 
         self._print_with_name(f"return obs, {reward}, {done}, {{}}")
-        print("-"*NUM_OF_DELIMITERS)
         return obs_3d, reward, done, {}
 
     def render(self):
         pass
-
-    def _tap(self, coordinates: tuple) -> None:
-        """
-        Tap
-        """
-        self.dtb_server.add_task(("tap", coordinates))
-
-    def _rotate_and_move(self, a: np.ndarray) -> None:
-        """
-        高速化のために回転と移動を同時に操作
-        """
-        self.dtb_server.add_task(("rotate_move", a))
 
     def _wait_for_my_turn(self) -> tuple[np.ndarray, float, bool, dict]:
         """
@@ -494,7 +484,7 @@ class AnimalTowerBattleLearning(threading.Thread):
         super(AnimalTowerBattleLearning, self).__init__()
 
         name_prefix = f"_a2c_cnn_r12m3s_p{player}"
-        env = AnimalTowerClient(
+        env = AnimalTowerBattleClient(
             dtb_server, player, f"{name_prefix}.csv", verbose=1)
 
         self.model = A2C(policy="CnnPolicy", env=env,
@@ -540,4 +530,5 @@ if __name__ == "__main__":
     finally:
         print("最後")
         dtb_server.stop()
+        del l1, l2
     print(threading.enumerate())
