@@ -159,18 +159,7 @@ class AnimalTowerBattleServer(threading.Thread):
         self.running = True
         # 停止まで無限ループ
         while self.running:
-            # タスク消化
-            while self.task_queue:
-                print(f"Server   : タスク一覧 {self.task_queue}")
-                # 先頭のタスク取り出し
-                task = self.task_queue.pop(0)
-                # 回転と移動操作
-                if task[0] == "rotate_move":
-                    self._rotate_and_move(task[1])
-                elif task[0] == "apply_x8":
-                    self._apply_x8()
-                elif task[0] == "retry":
-                    self._retry()
+            self._execute_tasks()
             # ひたすらスクショ
             self.driver.save_screenshot(SCREENSHOT_PATH)
             # bgr画像をメモリにロード
@@ -192,6 +181,38 @@ class AnimalTowerBattleServer(threading.Thread):
         """
         # print(task)
         self.task_queue.append(task)
+
+    def get_turn(self, p: int):
+        """
+        ターンを返す
+        """
+        return self.turns[p]
+
+    def stop(self):
+        """
+        停止
+        """
+        self.running = False
+
+    def _execute_tasks(self):
+        # リトライ重複回避用
+        first_retry = True
+        # タスク消化
+        while self.task_queue:
+            # print(f"Server   : タスク一覧 {self.task_queue}")
+            # 先頭のタスク取り出し
+            task = self.task_queue.pop(0)
+            # 回転と移動操作
+            if task[0] == "rotate_move":
+                self._rotate_and_move(task[1])
+            elif task[0] == "apply_x8":
+                self._apply_x8()
+            elif task[0] == "retry":
+                if first_retry:
+                    self._retry()
+                    first_retry = False
+                else:
+                    print("ダブったので無視")
 
     def _tap(self, coordinates):
         """
@@ -252,18 +273,6 @@ class AnimalTowerBattleServer(threading.Thread):
         sleep(0.5)
         self._tap((726, 1171))
         sleep(5)
-
-    def get_turn(self, p: int):
-        """
-        ターンを返す
-        """
-        return self.turns[p]
-
-    def stop(self):
-        """
-        停止
-        """
-        self.running = False
 
 
 class AnimalTowerClient(gym.Env):
@@ -346,7 +355,8 @@ class AnimalTowerClient(gym.Env):
         if self.prev_animal_count & 1 != self.dtb_server.get_turn(self.player):
             obs, reward, done, _ = self._wait_for_my_turn()
         action = self.ACTION_MAP[action_index]
-        self._print_with_name(f"Action({action[0], action[1]})", 1)
+        self._print_with_name(
+            f"Action({action_index}/{self.ACTION_MAP.shape[0]-1}){action[0], action[1]}", 1)
         # 回転と移動
         self._rotate_and_move(action)
         sleep(0.7)
