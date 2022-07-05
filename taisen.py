@@ -294,6 +294,7 @@ class AnimalTowerClient(gym.Env):
         リセット
         """
         print("Resetting...", end=" ", flush=True)
+        # リトライ申請
         self.dtb_server.add_task(("retry", self.player))
         self.prev_height = None
         self.prev_animal_count = None
@@ -308,7 +309,7 @@ class AnimalTowerClient(gym.Env):
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
-            sleep(0.5)
+            sleep(1)
         print("Done")
         t1 = time()
         print(f"リセット所要時間: {t1 - self.t0:4.2f}秒")
