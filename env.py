@@ -124,11 +124,12 @@ class AnimalTower(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
+    def __init__(self, player, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
         r = np.linspace(0, 11, 12, dtype=np.uint8)
         # b = [150, 540, 929]
         m = np.linspace(440, 640, 3, dtype=np.uint32)
+        self.player = player
         self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
         np.random.seed(0)
         np.random.shuffle(self.ACTION_MAP)
@@ -193,6 +194,16 @@ class AnimalTower(gym.Env):
         """
         1アクション
         """
+        self.driver.save_screenshot(SCREENSHOT_PATH)
+        img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+        animal_count = get_animal_count(img_bgr)
+        while animal_count is None or animal_count %2 != int(self.player[-1])-1:
+            print(f"{self.player}待機中...")
+            self.driver.save_screenshot(SCREENSHOT_PATH)
+            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+            img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            animal_count = get_animal_count(img_bgr)
+            sleep(10)
         action = self.ACTION_MAP[action_index]
         print(f"Action({action[0], action[1]})")
         # 回転と移動
