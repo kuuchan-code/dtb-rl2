@@ -13,8 +13,8 @@ register_env("my_env", env_creator)
 
 ray.init()
 trainer = dqn.DQNTrainer(env="my_env", config={
-    "env_config": {"n_step": 1, "noisy": True, "num_atoms": 2, "v_min": -10.0, "v_max": 10.0},
-    "num_workers": 1,
+    # "env_config": {"n_step": 1, "noisy": True, "num_atoms": 2, "v_min": -10.0, "v_max": 10.0},
+    # "num_workers": 1,
 })
 
 while True:
