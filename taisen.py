@@ -148,6 +148,10 @@ class AnimalTowerBattleServer(threading.Thread):
         # タスクを溜めるバッファ
         self.task_queue = []
 
+        # どちらが先手後手か決める
+        # [Player1のターン, Player2のターン]
+        self.turns = [0, 1]
+
     def run(self):
         """
         実行部分
@@ -250,6 +254,12 @@ class AnimalTowerBattleServer(threading.Thread):
         self._tap((726, 1171))
         sleep(5)
 
+    def get_turn(self, p: int):
+        """
+        ターンを返す
+        """
+        return self.turns[p]
+
     def stop(self):
         """
         停止
@@ -263,7 +273,7 @@ class AnimalTowerClient(gym.Env):
     """
 
     def __init__(self, dtb_server: AnimalTowerBattleServer, player, log_path="train.csv", log_episode_max=0x7fffffff):
-        print("Initializing...", end=" ", flush=True)
+        print("Initializing...")
         self.player = player
         self.dtb_server = dtb_server
 
@@ -283,7 +293,6 @@ class AnimalTowerClient(gym.Env):
         with open(self.log_path, "w") as f:
             print(f"animals,height", file=f)
 
-        print("Done")
         print("-"*NUM_OF_DELIMITERS)
 
         # 時間計測用
@@ -293,7 +302,7 @@ class AnimalTowerClient(gym.Env):
         """
         リセット
         """
-        print("Resetting...", end=" ", flush=True)
+        print("Resetting...")
         # リトライ申請
         self.dtb_server.add_task(("retry", self.player))
         self.prev_height = None
@@ -310,7 +319,6 @@ class AnimalTowerClient(gym.Env):
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
             sleep(1)
-        print("Done")
         t1 = time()
         print(f"リセット所要時間: {t1 - self.t0:4.2f}秒")
         self.t0 = t1
@@ -320,6 +328,11 @@ class AnimalTowerClient(gym.Env):
         """
         1アクション
         """
+        # 自分のターン待ち
+        if self.prev_animal_count & 1 != self.dtb_server.get_turn(self.player):
+            obs, reward, done, _ = self._wait_for_my_turn()
+            if done:
+                obs, reward, done, {}
         action = self.ACTION_MAP[action_index]
         print(f"Action({action[0], action[1]})")
         # 回転と移動
@@ -340,8 +353,9 @@ class AnimalTowerClient(gym.Env):
                 f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
             # 終端
             if is_result_screen(img_gray):
-                print("Game over")
+                print("多分負け")
                 done = True
+                reward = -1.0
                 with open(self.log_path, "a") as f:
                     print(f"{self.prev_animal_count},{self.prev_height}", file=f)
                 self.episode_count += 1
@@ -354,14 +368,13 @@ class AnimalTowerClient(gym.Env):
             # 高さ更新を検知
             elif height > self.prev_height:
                 print(f"Height update: {height}m")
-                reward = 1.0
                 break
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
                 print("No height update")
-                reward = 1.0
                 break
             sleep(1)
+
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
@@ -389,21 +402,103 @@ class AnimalTowerClient(gym.Env):
         """
         self.dtb_server.add_task(("rotate_move", a))
 
+    def _wait_for_my_turn(self) -> tuple[np.ndarray, float, bool, dict]:
+        """
+        自分のターンを待つ
+        """
+        print("待機中")
+        # 変数の初期化
+        reward = 0.0
+        done = False
+        while True:
+            # サーバから取得
+            img_bgr = self.dtb_server.get_image()
+            img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            obs = to_training_image(img_bgr)
+            # ループで必ず高さと動物数を取得
+            height = get_height(img_gray)
+            animal_count = get_animal_count(img_bgr)
+            print(
+                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
+            # 終端
+            if is_result_screen(img_gray):
+                print("多分勝ち")
+                done = True
+                reward = 1.0
+                with open(self.log_path, "a") as f:
+                    print(f"{self.prev_animal_count},{self.prev_height}", file=f)
+                self.episode_count += 1
+                assert self.episode_count < self.log_episode_max, f"エピソード{self.log_episode_max}到達"
+                break
+            # 結果画面ではないが, 高さもしくは動物数が取得できない場合
+            elif height is None or animal_count is None:
+                print("結果画面遷移中")
+                pass
+            # 高さ更新を検知
+            elif height > self.prev_height:
+                print(f"Height update: {height}m")
+                break
+            # 高さ更新はないが動物数更新を検知
+            elif animal_count > self.prev_animal_count:
+                print("No height update")
+                break
+            sleep(1)
+
+        # ステップの終わりに高さと動物数を更新
+        self.prev_height = height
+        self.prev_animal_count = animal_count
+        # 共通処理
+        cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        t1 = time()
+        print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
+        self.t0 = t1
+        print(f"return obs, {reward}, {done}, {{}}")
+        print("-"*NUM_OF_DELIMITERS)
+        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
+
+
+class AnimalTowerBattleLearning(threading.Thread):
+    """
+    学習のためのスレッド
+    """
+
+    def __init__(self, dtb_server, player):
+        super(AnimalTowerBattleLearning, self).__init__()
+        self.player = player
+
+        name_prefix = f"_a2c_cnn_r12m3s_{self.player}"
+        env = AnimalTowerClient(dtb_server, 0, f"{name_prefix}.csv")
+
+        self.model = A2C(policy="CnnPolicy", env=env,
+                         verbose=1, tensorboard_log="tensorboard")
+        self.checkpoint_callback = CheckpointCallback(
+            save_freq=100, save_path="models",
+            name_prefix=name_prefix
+        )
+
+    def run(self):
+        """
+        学習実行
+        停止はどうしよう
+        """
+        self.model.learn(total_timesteps=10000, callback=[
+                         self.checkpoint_callback])
+
 
 if __name__ == "__main__":
-    print(threading.enumerate())
+    # print(threading.enumerate())
     dtb_server = AnimalTowerBattleServer()
     try:
         # サーバ開始
         dtb_server.start()
         print(threading.enumerate())
-        name_prefix = "_a2c_cnn_rotate12_move5_bin"
-        env = AnimalTowerClient(dtb_server, 0, name_prefix+".csv")
-        model = A2C(policy='CnnPolicy', env=env,
-                    verbose=1, tensorboard_log="tensorboard")
-        checkpoint_callback = CheckpointCallback(save_freq=100, save_path='models',
-                                                 name_prefix=name_prefix)
-        model.learn(total_timesteps=10000, callback=[checkpoint_callback])
+        l1 = AnimalTowerBattleLearning(dtb_server, 0)
+        l1.start()
+        print(threading.enumerate())
+
+        while True:
+            print("あいうえお")
+            sleep(1)
 
     except Exception as e:
         raise e
