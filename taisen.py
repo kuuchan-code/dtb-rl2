@@ -3,6 +3,7 @@
 Deep reinforcement learning on the small base of the Animal Tower.
 """
 from __future__ import annotations
+from datetime import datetime
 import itertools
 from time import sleep, time
 import gym
@@ -16,6 +17,7 @@ from selenium.webdriver.common.actions import interaction
 import threading
 from stable_baselines3 import A2C
 from stable_baselines3.common.callbacks import CheckpointCallback
+import ctypes
 
 
 SCREENSHOT_PATH = "./screenshot.png"
@@ -200,7 +202,7 @@ class AnimalTowerBattleServer(threading.Thread):
         first_retry = True
         # タスク消化
         while self.task_queue:
-            print(f"Server   : タスク一覧 {self.task_queue}")
+            # print(f"Server   : タスク一覧 {self.task_queue}")
             # 先頭のタスク取り出し
             task = self.task_queue.pop(0)
             # 回転と移動操作
@@ -212,8 +214,6 @@ class AnimalTowerBattleServer(threading.Thread):
                 if first_retry:
                     self._retry()
                     first_retry = False
-                else:
-                    print("ダブったので無視")
 
     def _tap(self, coordinates):
         """
@@ -318,7 +318,7 @@ class AnimalTowerBattleClient(gym.Env):
         リセット
         2つのプレイヤーが同じコマンド送ってもいいや
         """
-        self._print_with_name("Resetting...", 1)
+        self._print_with_name("Resetting...", 2)
         # リトライ申請
         self.dtb_server.add_task((self.player, "retry"))
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
@@ -500,10 +500,34 @@ class AnimalTowerBattleLearning(threading.Thread):
         停止はどうしよう
         とりあえずキーボード割り込みを何回かしてもらう
         """
-        self.model.learn(
-            total_timesteps=10000,
-            callback=[self.checkpoint_callback]
-        )
+        try:
+            self.model.learn(
+                total_timesteps=10000,
+                callback=[self.checkpoint_callback]
+            )
+        finally:
+            print("学習停止")
+
+    def get_id(self):
+        """
+        スレッドのID取得
+        """
+        if hasattr(self, "_thread_id"):
+            return self._thread_id
+        for id, thread in threading._active.items():
+            if thread is self:
+                return id
+
+    def raise_exception(self):
+        """
+        例外処理?
+        """
+        thread_id = self.get_id()
+        resu = ctypes.pythonapi.PyThreadState_SetAsyncExc(
+            thread_id, ctypes.py_object(SystemExit))
+        if resu > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            print("Failure in raising exception")
 
 
 if __name__ == "__main__":
@@ -514,15 +538,18 @@ if __name__ == "__main__":
         dtb_server.start()
         print(threading.enumerate())
         verbose = 1
-        l1 = AnimalTowerBattleLearning(dtb_server, 0, verbose=verbose)
-        l2 = AnimalTowerBattleLearning(dtb_server, 1, verbose=verbose)
-        l1.start()
-        print(threading.enumerate())
-        l2.start()
-        print(threading.enumerate())
+
+        learning_list = []
+        for i in range(2):
+            dtb_learning = AnimalTowerBattleLearning(
+                dtb_server, i, verbose=verbose)
+            dtb_learning.start()
+            learning_list.append(dtb_learning)
+
+        # メインは謎のループ
         for i in range(1000000):
-            print(i)
             sleep(10)
+            print(datetime.now())
 
     except Exception as e:
         raise e
@@ -530,5 +557,7 @@ if __name__ == "__main__":
     finally:
         print("最後")
         dtb_server.stop()
-        del l1, l2
+        for l in learning_list:
+            l.raise_exception()
+
     print(threading.enumerate())
