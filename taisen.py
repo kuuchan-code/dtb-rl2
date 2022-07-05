@@ -161,7 +161,7 @@ class AnimalTowerBattleServer(threading.Thread):
         while self.running:
             # タスク消化
             while self.task_queue:
-                print(self.task_queue)
+                print(f"Server   :タスク一覧 {self.task_queue}")
                 # 先頭のタスク取り出し
                 task = self.task_queue.pop(0)
                 # 回転と移動操作
@@ -177,7 +177,7 @@ class AnimalTowerBattleServer(threading.Thread):
             # 画像処理はクライアント側に任せる
             self.img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
             if is_off_x8(self.img_bgr):
-                print("x8 speederを適用 (サーバ自己判断)")
+                print("Server   : x8 speederを適用")
                 self.add_task(("apply_x8", "server"))
 
     def get_image(self):
@@ -273,9 +273,9 @@ class AnimalTowerClient(gym.Env):
     """
 
     def __init__(self, dtb_server: AnimalTowerBattleServer, player, log_path="train.csv", log_episode_max=0x7fffffff):
-        print("Initializing...")
         self.player = player
         self.dtb_server = dtb_server
+        self._print_with_name("Initializing...")
 
         r = np.linspace(0, 11, 12, dtype=np.uint8)
         # b = [150, 540, 929]
@@ -306,7 +306,7 @@ class AnimalTowerClient(gym.Env):
         リセット
         2つのプレイヤーが同じコマンド送ってもいいや
         """
-        print("Resetting...")
+        self._print_with_name("Resetting...")
         # リトライ申請
         self.dtb_server.add_task(("retry", self.player))
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
@@ -317,9 +317,9 @@ class AnimalTowerClient(gym.Env):
             obs = to_training_image(img_bgr)
             self.prev_height = get_height(img_gray)
             self.prev_animal_count = get_animal_count(img_bgr)
-            cv2.imwrite(self.obs_path, obs)
             # デバッグ
-            print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
+            self._print_with_name(
+                f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
             sleep(1)
             if self.prev_height is None:
                 continue
@@ -329,8 +329,9 @@ class AnimalTowerClient(gym.Env):
             # 相手が初手で落としたら何もなかったことにする
             if self.prev_animal_count & 1 == self.dtb_server.get_turn(self.player):
                 break
+        cv2.imwrite(self.obs_path, obs)
         t1 = time()
-        print(f"リセット所要時間: {t1 - self.t0:4.2f}秒")
+        self._print_with_name(f"リセット所要時間 (後手の場合は初手含む): {t1 - self.t0:4.2f}秒")
         self.t0 = t1
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
 
@@ -343,7 +344,7 @@ class AnimalTowerClient(gym.Env):
         if self.prev_animal_count & 1 != self.dtb_server.get_turn(self.player):
             obs, reward, done, _ = self._wait_for_my_turn()
         action = self.ACTION_MAP[action_index]
-        print(f"Action({action[0], action[1]})")
+        self._print_with_name(f"Action({action[0], action[1]})")
         # 回転と移動
         self._rotate_and_move(action)
         sleep(0.7)
@@ -358,11 +359,11 @@ class AnimalTowerClient(gym.Env):
             # ループで必ず高さと動物数を取得
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
-            print(
-                f"Player({self.player}), 動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
+            self._print_with_name(
+                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
             # 終端
             if is_result_screen(img_gray):
-                print("多分負け")
+                self._print_with_name("多分負け")
                 done = True
                 reward = -1.0
                 with open(self.log_path, "a") as f:
@@ -370,15 +371,15 @@ class AnimalTowerClient(gym.Env):
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
-                print("結果画面遷移中")
+                self._print_with_name("結果画面遷移中")
                 pass
             # 高さ更新を検知
             elif height > self.prev_height:
-                print(f"Height update: {height}m")
+                self._print_with_name(f"Height update: {height}m")
                 break
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
-                print("No height update")
+                self._print_with_name("No height update")
                 break
             sleep(1)
 
@@ -395,10 +396,10 @@ class AnimalTowerClient(gym.Env):
             obs_3d, reward, done, _ = self._wait_for_my_turn()
 
         t1 = time()
-        print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
+        self._print_with_name(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
         self.t0 = t1
 
-        print(f"return obs, {reward}, {done}, {{}}")
+        self._print_with_name(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
         return obs_3d, reward, done, {}
 
@@ -421,7 +422,7 @@ class AnimalTowerClient(gym.Env):
         """
         自分のターンを待つ
         """
-        print(f"Player({self.player}) 待機中")
+        self._print_with_name(f"Player({self.player}) 待機中")
         # 変数の初期化
         reward = 0.0
         done = False
@@ -433,11 +434,11 @@ class AnimalTowerClient(gym.Env):
             # ループで必ず高さと動物数を取得
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
-            print(
-                f"Player({self.player}), 動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
+            self._print_with_name(
+                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
             # 終端
             if is_result_screen(img_gray):
-                print("多分勝ち")
+                self._print_with_name("多分勝ち")
                 done = True
                 reward = 1.0
                 with open(self.log_path, "a") as f:
@@ -445,15 +446,15 @@ class AnimalTowerClient(gym.Env):
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
-                print("結果画面遷移中")
+                self._print_with_name("結果画面遷移中")
                 pass
             # 高さ更新を検知
             elif height > self.prev_height:
-                print(f"Height update: {height}m")
+                self._print_with_name(f"Height update: {height}m")
                 break
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
-                print("No height update")
+                self._print_with_name("No height update")
                 break
             sleep(1)
 
@@ -462,6 +463,13 @@ class AnimalTowerClient(gym.Env):
         self.prev_animal_count = animal_count
         cv2.imwrite(self.obs_path, obs)
         return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
+
+    def _print_with_name(self, moji: str):
+        """
+        文字列をプレイヤー名と一緒に出力
+        引数はひとつだけ
+        """
+        print(f"Player({self.player}): {moji}")
 
 
 class AnimalTowerBattleLearning(threading.Thread):
@@ -486,9 +494,12 @@ class AnimalTowerBattleLearning(threading.Thread):
         """
         学習実行
         停止はどうしよう
+        とりあえずキーボード割り込みを何回かしてもらう
         """
-        self.model.learn(total_timesteps=10000, callback=[
-                         self.checkpoint_callback])
+        self.model.learn(
+            total_timesteps=10000,
+            callback=[self.checkpoint_callback]
+        )
 
 
 if __name__ == "__main__":
