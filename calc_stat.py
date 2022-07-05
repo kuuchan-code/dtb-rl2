@@ -58,7 +58,7 @@ def main(fnamer: str, new_data_num: int | None):
     else:
         df = df[-new_data_num:]
         fnamew = f"statistics/{b_name}_new{new_data_num}.txt"
-    print(df)
+    # print(df)
     r.assign("df", df)
     # print(r('df["animals"]'))
     moji = r("summary(df)")
