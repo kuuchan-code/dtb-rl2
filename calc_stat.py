@@ -2,6 +2,7 @@
 """
 統計値計算
 """
+from __future__ import annotations
 import pyper
 import pandas as pd
 import argparse
@@ -21,9 +22,15 @@ for i in range(10):
     r("")
 
 
-def main(fnamer):
-    # print(fnamer)
+def main(fnamer: str, new_data_num: int | None):
     df = pd.read_csv(fnamer)
+    b_name = os.path.basename(fnamer).split('.', 1)[0]
+    if new_data_num is None:
+        fnamew = f"statistics/{b_name}.txt"
+    else:
+        df = df[-new_data_num:]
+        fnamew = f"statistics/{b_name}_new{new_data_num}.txt"
+    print(df)
     r.assign("df", df)
     # print(r('df["animals"]'))
     moji = r("summary(df)")
@@ -33,11 +40,10 @@ def main(fnamer):
     # ピアソンの積率相関係数
     moji += r('cor.test(df[,1], df[,2])')
     print(moji)
-    fnamew = f"statistics/{os.path.basename(fnamer).split('.', 1)[0]}.txt"
     with open(fnamew, "w") as f:
         print(moji, file=f)
     # print(r('df[,1]'))
 
 
 if __name__ == "__main__":
-    main(args.file)
+    main(args.file, args.new)
