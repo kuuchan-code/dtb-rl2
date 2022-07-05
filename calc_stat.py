@@ -10,6 +10,9 @@ import os
 parser = argparse.ArgumentParser(description="エピソード終了時の動物数, 高さの統計量計算")
 
 parser.add_argument("file", help="読み込むファイル")
+parser.add_argument(
+    "-n", "--new", help="新しいデータのみ (データ数を与える)", type=int
+)
 
 args = parser.parse_args()
 
@@ -23,19 +26,16 @@ def main(fnamer):
     df = pd.read_csv(fnamer)
     r.assign("df", df)
     # print(r('df["animals"]'))
+    moji = r("summary(df)")
     # t検定
-    print(r("summary(df)"))
-    print(r('t.test(df["animals"])'))
-    print(r('t.test(df["height"])'))
+    moji += r('t.test(df["animals"])')
+    moji += r('t.test(df["height"])')
     # ピアソンの積率相関係数
-    print(r('cor.test(df[,1], df[,2])'))
-    # print()
+    moji += r('cor.test(df[,1], df[,2])')
+    print(moji)
     fnamew = f"statistics/{os.path.basename(fnamer).split('.', 1)[0]}.txt"
     with open(fnamew, "w") as f:
-        print(r("summary(df)"), file=f)
-        print(r('t.test(df["animals"])'), file=f)
-        print(r('t.test(df["height"])'), file=f)
-        print(r('cor.test(df[,1], df[,2])'), file=f)
+        print(moji, file=f)
     # print(r('df[,1]'))
 
 
