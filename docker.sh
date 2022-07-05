@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# pull rayproject/ray:latest-gpu
+pull rayproject/ray:latest-gpu
 # sudo docker pull rayproject/ray:latest-gpu
 
 # run rayproject/ray:latest-gpu
@@ -21,5 +21,4 @@
 # python3 dtb-rl2/test/rllib.py
 
 
-# memo
-sudo docker run --network host -p 8265:8265 -t -i --runtime=nvidia --shm-size=2.41gb --add-host=localhost_main:192.168.0.227  -v ~/dtb-rl2:/home/ray/dtb-rl2 test
+# sudo docker run --network host -it --runtime=nvidia --shm-size=2.41gb --add-host=localhost_main:127.0.0.1 -v ~/dtb-rl2:/home/ray/dtb-rl2 rayproject/ray:latest-gpu-tensorflow
