@@ -32,6 +32,8 @@ def main(fnamer):
     # ax.plot(x, y1[:-move_mean_length+1])
     ax.plot(x, y1_conv, label="animals")
     ax.plot(x, y2_conv, label="height")
+    ax.set_xlabel("episode")
+    # ax.set_ylabel("animals, height")
     ax.legend()
     ax.grid()
     # print(y1.shape)
