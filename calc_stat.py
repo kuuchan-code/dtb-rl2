@@ -8,12 +8,40 @@ import pandas as pd
 import argparse
 import os
 
+
+class RangeCheck(object):
+    def __init__(self, low_limit=None, high_limit=None, vtype="integer"):
+        self.min = low_limit
+        self.max = high_limit
+        self.type = vtype
+
+    def __contains__(self, val):
+        ret = True
+        if self.min is not None:
+            ret = ret and (val >= self.min)
+        if self.max is not None:
+            ret = ret and (val <= self.max)
+        return ret
+
+    def __iter__(self):
+        low = self.min
+        if low is None:
+            low = "-inf"
+        high = self.max
+        if high is None:
+            high = "+inf"
+        l1 = self.type
+        l2 = f" {low} <= x <= {high}"
+        return iter((l1, l2))
+
+
 parser = argparse.ArgumentParser(description="エピソード終了時の動物数, 高さの統計量計算")
 
 parser.add_argument("file", help="読み込むファイル")
 parser.add_argument(
-    "-n", "--new", help="新しいデータのみ (データ数を与える)", type=int
+    "-n", "--new", help="新しいデータのみ (データ数を与える)", type=int, choices=RangeCheck(low_limit=10)
 )
+
 
 args = parser.parse_args()
 
