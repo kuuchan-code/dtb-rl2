@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Import the RL algorithm (Trainer) we would like to use.
 from ray.rllib.agents.ppo import PPOTrainer
 
