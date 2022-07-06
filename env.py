@@ -251,8 +251,6 @@ class AnimalTower(gym.Env):
         print("-"*NUM_OF_DELIMITERS)
         return obs, reward, done, {}
 
-    def render(self):
-        pass
 
     def _tap(self, coordinates: tuple) -> None:
         """
