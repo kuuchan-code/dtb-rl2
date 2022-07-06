@@ -4,7 +4,7 @@ pull rayproject/ray:latest-gpu
 # sudo docker pull rayproject/ray:latest-gpu
 
 # run rayproject/ray:latest-gpu
-# docker run -t -i --gpus all --shm-size=2.41gb -v ~/dtb-rl2:/home/ray/dtb-rl2 rayproject/ray:latest-gpu
+# docker run -it --runtime=nvidia --shm-size=2.41gb -v ~/dtb-rl2:/home/ray/dtb-rl2 rayproject/ray:latest-gpu
 
 # install tensorflow(in the docker)
 # pip install tensorflow
