@@ -1,2 +1,4 @@
 opencv-python
 Appium-Python-Client
+pyper
+matplotlib
