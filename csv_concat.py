@@ -3,6 +3,7 @@
 統計値計算
 """
 from __future__ import annotations
+import os
 import pandas as pd
 import argparse
 
@@ -16,12 +17,20 @@ args = parser.parse_args()
 
 
 def main(fname_dst, fname_src):
+    res = input(f"{fname_src}は削除され, {fname_dst}は上書きされます. よろしいですか? (y/n):")
+    if res != "y":
+        return -1
     print(fname_dst, fname_src)
     df_old = pd.read_csv(fname_dst)
     df_new = pd.read_csv(fname_src)
-    print(df_old)
-    print(df_new)
-    print(pd.concat([df_old, df_new]))
+    df_all = pd.concat([df_old, df_new])
+    print(df_all)
+    # df_all.to_csv("test.csv", index=False)
+    # ファイル結合
+    df_all.to_csv(fname_dst, index=False)
+    # 削除
+    os.remove(fname_src)
+    return 0
 
 
 if __name__ == "__main__":
