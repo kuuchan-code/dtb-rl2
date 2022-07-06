@@ -33,3 +33,20 @@
 |    policy_loss        | 1.32     |
 |    value_loss         | 2.3      |
 ------------------------------------
+------------------------------------
+| rollout/              |          |
+|    ep_len_mean        | 5.99     |
+|    ep_rew_mean        | 4.99     |
+| time/                 |          |
+|    fps                | 0        |
+|    iterations         | 1000     |
+|    time_elapsed       | 16167    |
+|    total_timesteps    | 5000     |
+| train/                |          |
+|    entropy_loss       | -0.1     |
+|    explained_variance | 0.787    |
+|    learning_rate      | 0.0007   |
+|    n_updates          | 4288     |
+|    policy_loss        | 0.00706  |
+|    value_loss         | 1.46     |
+------------------------------------
