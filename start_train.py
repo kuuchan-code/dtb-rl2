@@ -28,7 +28,7 @@ trainer = dqn.DQNTrainer(env="my_env", config={
     "replay_buffer_config":{
         "type": "MultiAgentPrioritizedReplayBuffer",
         "prioritized_replay_alpha": 0.5,
-        "learning_starts": 10,
+        "learning_starts": 1000,
         "capacity": 50000
     },
     "n_step": 3,
