@@ -3,10 +3,8 @@
 統計値計算
 """
 from __future__ import annotations
-import pyper
 import pandas as pd
 import argparse
-import os
 
 
 parser = argparse.ArgumentParser(description="csvの結合")
@@ -23,6 +21,7 @@ def main(fname_dst, fname_src):
     df_new = pd.read_csv(fname_src)
     print(df_old)
     print(df_new)
+    print(pd.concat([df_old, df_new]))
 
 
 if __name__ == "__main__":
