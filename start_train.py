@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import gym, ray
-from ray.rllib.agents import dqn
+from ray.rllib.agents import a3c
 from env import AnimalTower
 
 
@@ -12,10 +12,15 @@ def env_creator(env_config):
 register_env("my_env", env_creator)
 
 ray.init()
-trainer = dqn.DQNTrainer(env="my_env", config={
-    # "env_config": {"n_step": 1, "noisy": True, "num_atoms": 2, "v_min": -10.0, "v_max": 10.0},
-    # "num_workers": 1,
-})
+config = a3c.DEFAULT_CONFIG.copy()
+config["num_gpus"] = 1
+config["num_workers"] = 1
+config["framework"] = "tf2"
+config["log_level"] = "INFO"
+trainer = a3c.A3CTrainer(env="my_env", config=config)
 
-while True:
+for i in range(10000):
     print(trainer.train())
+    if i % 100 == 0:
+       checkpoint = trainer.save()
+       print("checkpoint saved at", checkpoint)
