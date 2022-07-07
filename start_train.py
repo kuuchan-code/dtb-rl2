@@ -5,6 +5,7 @@ from env import AnimalTower
 
 from ray.tune.registry import register_env
 
+
 def env_creator(env_config):
     return AnimalTower()  # return an env instance
 

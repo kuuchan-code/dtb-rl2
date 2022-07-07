@@ -31,6 +31,7 @@ BLACK = np.zeros(3, dtype=np.uint8)
 WHITE = BLACK + 255
 WHITE_DARK = WHITE - 15
 
+udid_list = ["CB512C5QDQ", "P3PDU18321001333"]
 
 def is_result_screen(img_gray: np.ndarray) -> bool:
     """
@@ -137,6 +138,7 @@ class AnimalTower(gym.Env):
         self.reward_range = [0.0, 1.0]
         caps = {
             "platformName": "android",
+            "appium:udid": udid_list.pop(0),
             "appium:ensureWebviewHavePages": True,
             "appium:nativeWebScreenshot": True,
             "appium:newCommandTimeout": 3600,
