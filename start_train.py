@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import gym, ray
-from ray.rllib.agents.dqn import R2D2Trainer
+from ray.rllib.agents import dqn
 from env import AnimalTower
 from selenium.common.exceptions import WebDriverException
 from datetime import datetime
@@ -19,7 +19,8 @@ register_env("my_env", env_creator)
 #     print(f"{k}: {v}")
 # assert False
 
-trainer = R2D2Trainer(env="my_env", config={
+print(dqn.R2D2_DEFAULT_CONFIG)
+trainer = dqn.R2D2Trainer(env="my_env", config={
     "rollout_fragment_length": 200,
     # R2D2 settings.
     "replay_buffer_config": {
