@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import gym, ray
-from ray.rllib.agents import dqn
+from ray.rllib.agents.ddpg import ApexDDPGTrainer
 from env import AnimalTower
 from selenium.common.exceptions import WebDriverException
 from datetime import datetime
@@ -19,34 +19,9 @@ register_env("my_env", env_creator)
 #     print(f"{k}: {v}")
 # assert False
 
-trainer = dqn.DQNTrainer(env="my_env", config={
+trainer = ApexDDPGTrainer(env="my_env", config={
     "num_workers": 2,
-    "num_atoms": 51,
-    "noisy": True,
-    "gamma": 0.99,
-    "lr": .0001,
-    "hiddens": [512],
-    "rollout_fragment_length": 4,
-    "train_batch_size": 1,
-    "exploration_config": {
-        "epsilon_timesteps": 2,
-        "final_epsilon": 0.0,
-    },
-    "target_network_update_freq": 500,
-    "replay_buffer_config":{
-        "type": "MultiAgentPrioritizedReplayBuffer",
-        "prioritized_replay_alpha": 0.5,
-        "learning_starts": 10,
-        "capacity": 50000
-    },
-    "n_step": 3,
-    "model": {
-        "grayscale": True,
-        "zero_mean": False,
-        "dim": 42
-    },
-    "disable_env_checking": True,
-    "ignore_worker_failures": True
+    "learning_starts": 10,
 })
 
 
