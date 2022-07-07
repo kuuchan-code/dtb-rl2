@@ -21,7 +21,7 @@ register_env("my_env", env_creator)
 
 print(dqn.R2D2_DEFAULT_CONFIG)
 trainer = dqn.R2D2Trainer(env="my_env", config={
-    "rollout_fragment_length": 200,
+    "rollout_fragment_length": 4,
     # R2D2 settings.
     "replay_buffer_config": {
         "type": "MultiAgentReplayBuffer",
