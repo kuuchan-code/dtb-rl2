@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import gym, ray
-from ray.rllib.agents.ddpg import ApexDDPGTrainer
+from ray.rllib.agents.dqn import R2D2Trainer
 from env import AnimalTower
 from selenium.common.exceptions import WebDriverException
 from datetime import datetime
@@ -19,10 +19,29 @@ register_env("my_env", env_creator)
 #     print(f"{k}: {v}")
 # assert False
 
-trainer = ApexDDPGTrainer(env="my_env", config={
-    "num_workers": 2,
-    "learning_starts": 10,
-    "replay_batch_size": 16,
+trainer = R2D2Trainer(env="my_env", config={
+    "rollout_fragment_length": 200,
+    # R2D2 settings.
+    "replay_buffer_config": {
+        "type": "MultiAgentReplayBuffer",
+        # "storage_unit": "sequences",
+        "replay_burn_in": 20,  # 20
+        # "zero_init_states": True
+    },
+    #dueling: false
+    "lr": 0.0005,
+    # Give some more time to explore.
+    "exploration_config": {
+        "epsilon_timesteps": 50000  # 50000
+    },
+    # Wrap with an LSTM and use a very simple base-model.
+    "model":{
+        "fcnet_hiddens": [64],  # [64]
+        "fcnet_activation": "linear",
+        "use_lstm": True,
+        "lstm_cell_size": 64,  # 64
+        "max_seq_len": 5  # 20
+    }
 })
 
 
