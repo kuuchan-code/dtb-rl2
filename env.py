@@ -111,7 +111,7 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     # 大きい盤面
     a = cv2.bitwise_not(cv2.inRange(
         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
-    img_scaled = (a/ 255.).astype(np.float32) 
+    img_scaled = (a/ 255.).astype(np.float32)  # こうしてもネットワークの出力おかしそう
     return img_scaled
 
 
