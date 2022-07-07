@@ -50,11 +50,11 @@ trainer = dqn.DQNTrainer(env="my_env", config={
 })
 
 
-trainer.train()
-with open("/home/ray/dtb-rl2/a.txt", "w") as f:
-    print("あ", file=f)
-# for i in range(10000):
-#     print(trainer.train())
-#     if i % 100 == 0:
-#        checkpoint = trainer.save()
-#        print("checkpoint saved at", checkpoint)
+# trainer.train()
+# with open("/home/ray/dtb-rl2/a.txt", "w") as f:
+#     print("あ", file=f)
+for i in range(10000):
+    print(trainer.train())
+    if i % 100 == 0:
+       checkpoint = trainer.save()
+       print("checkpoint saved at", checkpoint)
