@@ -128,7 +128,7 @@ class AnimalTower(gym.Env):
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
         r = [0, 4, 6, 8]
-        m = np.linspace(150, 929, 11, dtype=np.uint32)
+        m = np.linspace(150.5, 929.5, 3, dtype=np.uint32)
         self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
         # 出力サイズを変更し忘れていた!!
         self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
