@@ -144,7 +144,7 @@ class AnimalTower(gym.Env):
         self.SCREENSHOT_PATH = f"./screenshot_{my_udid}.png"
         print("Initializing...", end=" ", flush=True)
         print(my_udid)
-        r = [6]
+        r = [0, 6]
         m = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
         self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
         # 出力サイズを変更し忘れていた!!
