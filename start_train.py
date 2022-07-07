@@ -30,7 +30,7 @@ trainer = ApexDDPGTrainer(env="my_env", config={
     "n_step": 3,
     "target_network_update_freq": 100,
     "tau": 1.0,
-    "evaluation_interval": 5,
+    "evaluation_interval": None,
     "evaluation_duration": 10
 })
 
