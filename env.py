@@ -139,8 +139,8 @@ class AnimalTower(gym.Env):
             with open("tmp", "w") as f:
                 pass
             my_udid = udid_list[1]
-            appium_port = "4823"
-            # appium_port = "4723"
+            # appium_port = "4823"
+            appium_port = "4723"
         self.SCREENSHOT_PATH = f"./screenshot_{my_udid}.png"
         self.OBSERVATION_IMAGE_PATH = f"./observation_{my_udid}.png"
         print("Initializing...", end=" ", flush=True)
