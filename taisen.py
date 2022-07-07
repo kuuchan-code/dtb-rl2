@@ -131,8 +131,9 @@ class AnimalTowerBattleServer(threading.Thread):
     端末を動かすためのスレッド
     """
 
-    def __init__(self):
+    def __init__(self, verbose=1):
         super(AnimalTowerBattleServer, self).__init__()
+        self.verbose = verbose
         print("Appium設定中")
         caps = {
             "platformName": "android",
@@ -182,9 +183,10 @@ class AnimalTowerBattleServer(threading.Thread):
             self.info = self._create_info()
             # x8 speederの停止を検知
             if self.info["x8_disabled"]:
-                print("Server   : x8 speederを適用")
+                self._print_with_name("x8 speeder を適用", 1)
                 self.add_task(("server", "apply_x8"))
             if self.info["end"]:
+                self._print_with_name("リセット処理", 1)
                 self.add_task(("server", "retry"))
 
     def _create_info(self):
@@ -232,7 +234,7 @@ class AnimalTowerBattleServer(threading.Thread):
         first_retry = True
         # タスク消化
         while self.task_queue:
-            # print(f"Server   : タスク一覧 {self.task_queue}")
+            self._print_with_name(f"タスク一覧 {self.task_queue}", 2)
             # 先頭のタスク取り出し
             task = self.task_queue.pop(0)
             # 回転と移動操作
@@ -291,7 +293,7 @@ class AnimalTowerBattleServer(threading.Thread):
             # 情報計算
             self.info = self._create_info()
         print("-"*NUM_OF_DELIMITERS)
-        # print("Server   : リセット完了")
+        self._print_with_name("リセット完了")
 
     def _apply_x8(self):
         """
@@ -301,6 +303,14 @@ class AnimalTowerBattleServer(threading.Thread):
         sleep(0.5)
         self._tap((726, 1171))
         sleep(5)
+
+    def _print_with_name(self, moji: str, verbose=2):
+        """
+        文字列をサーバ名と一緒に出力
+        引数はひとつだけ
+        """
+        if verbose <= self.verbose:
+            print(f"Server   : {moji}")
 
 
 class AnimalTowerBattleClient(gym.Env):
@@ -519,14 +529,14 @@ class AnimalTowerBattleLearning(threading.Thread):
 
 if __name__ == "__main__":
     # print(threading.enumerate())
-    dtb_server = AnimalTowerBattleServer()
+    verbose = 2
+    dtb_server = AnimalTowerBattleServer(verbose=verbose)
     try:
         # サーバ開始
         dtb_server.start()
         # クライアントを動かすまで少し待つ
         sleep(5)
         print(threading.enumerate())
-        verbose = 2
 
         learning_list = []
         for i in range(2):
