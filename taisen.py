@@ -161,6 +161,7 @@ class AnimalTowerBattleServer(threading.Thread):
         """
         実行部分
         """
+        print("動物タワーサーバ実行開始")
         self.running = True
         # 停止まで無限ループ
         while self.running:
