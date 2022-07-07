@@ -290,6 +290,9 @@ class AnimalTowerBattleServer(threading.Thread):
         リセットするまでずっとここにいる
         """
         tmp_info = self.info.copy()
+        # リセットの前段階でターンを決めておく
+        # ターン決めで使われるため
+        self.player_sente = rd.randint(0, 1)
         # 初期の高さと動物数を取得できるまでループ
         while not tmp_info["valid"]:
             # リトライボタンをタップして少し待つ
@@ -299,13 +302,11 @@ class AnimalTowerBattleServer(threading.Thread):
             self.driver.save_screenshot(SCREENSHOT_PATH)
             # 情報計算 (非公開)
             tmp_info = self._create_info()
-        sleep(3)
         self.info = tmp_info.copy()
 
         print("-"*NUM_OF_DELIMITERS)
         self._print_with_name("リセット完了")
 
-        self.player_sente = rd.randint(0, 1)
         self._print_with_name(
             f"先手: {self.player_sente}, 後手: {self.player_sente ^ 1}", 1)
 
@@ -495,8 +496,8 @@ class AnimalTowerBattleClient(gym.Env):
         self.prev_height = info["height"]
         self.prev_animal_count = info["animals"]
 
-        obs_3d = np.reshape(info["obs"],  (1, *TRAINNING_IMAGE_SIZE))
-        return obs_3d, reward, done, {}
+        cv2.imwrite(self.obs_path, info["obs"])
+        return np.reshape(info["obs"],  (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
 
     def _print_with_name(self, moji: str, verbose=2):
         """
@@ -543,7 +544,7 @@ class AnimalTowerBattleLearning(threading.Thread):
 
 if __name__ == "__main__":
     # print(threading.enumerate())
-    verbose = 2
+    verbose = 1
     dtb_server = AnimalTowerBattleServer(verbose=verbose)
     try:
         # サーバ開始
