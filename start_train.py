@@ -21,29 +21,16 @@ register_env("my_env", env_creator)
 
 print(dqn.R2D2_DEFAULT_CONFIG)
 trainer = dqn.R2D2Trainer(env="my_env", config={
-    # "rollout_fragment_length": 4,
-    "framework": "torch",
+    "framework": "tf",
     # R2D2 settings.
-    # "replay_buffer_config": {
-        # "type": "MultiAgentReplayBuffer",
-        # "storage_unit": "sequences",
-        # "replay_burn_in": 20,  # 20
-        # "zero_init_states": True
-    # },
-    #dueling: false
-    # "lr": 0.0005,
-    # Give some more time to explore.
     "exploration_config": {
-        "epsilon_timesteps": 10  # 50000
+        "epsilon_timesteps": 10  # 10000
     },
-    "target_network_update_freq": 10,
-    # "num_gpus": 1,
-    # Wrap with an LSTM and use a very simple base-model.
+    "target_network_update_freq": 3,  # 2500
     "model":{
-        "fcnet_hiddens": [128],  # [64]
-    #     "fcnet_activation": "linear",
-        "use_lstm": True,
-        "lstm_cell_size": 32,  # 64
+        "fcnet_hiddens": [128],  # [256, 256]
+        "use_lstm": True,  # False
+        "lstm_cell_size": 64,  # 256
         "max_seq_len": 2  # 20
     }
 })
