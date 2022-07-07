@@ -25,6 +25,7 @@ OBSERVATION_IMAGE_PATH = "./observation.png"
 TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.984
 TRAINNING_IMAGE_SIZE = 256, 75  # small
+SCREENSHOT_SIZE = 1920, 1080, 3
 # TRAINNING_IMAGE_SIZE = 256, 144  # big
 NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
@@ -146,13 +147,15 @@ class AnimalTowerBattleServer(threading.Thread):
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
         self.running = False
-        self.img_bgr = None
+        self.img_bgr = np.random.randint(0, 256, SCREENSHOT_SIZE)
+        print(self.img_bgr.shape)
         # タスクを溜めるバッファ
         self.task_queue = []
 
         # どちらが先手後手か決める
         # [Player1のターン, Player2のターン]
         self.turns = [0, 1]
+        self.info = {"img_gray": None}
 
     def run(self):
         """
@@ -166,7 +169,10 @@ class AnimalTowerBattleServer(threading.Thread):
             self.driver.save_screenshot(SCREENSHOT_PATH)
             # bgr画像をメモリにロード
             # 画像処理はクライアント側に任せる
-            self.img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+            img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            self.img_bgr = img_bgr
+            self.info["img_gray"] = img_gray
             if is_off_x8(self.img_bgr):
                 print("Server   : x8 speederを適用")
                 self.add_task(("server", "apply_x8"))
@@ -517,6 +523,7 @@ if __name__ == "__main__":
     try:
         # サーバ開始
         dtb_server.start()
+        sleep(5)
         print(threading.enumerate())
         verbose = 2
 
@@ -525,7 +532,7 @@ if __name__ == "__main__":
             dtb_learning = AnimalTowerBattleLearning(
                 dtb_server, i, verbose=verbose)
             # デーモンをセットすることで止まるらしい
-            dtb_learning.setDaemon(True)
+            dtb_learning.daemon = True
             dtb_learning.start()
             learning_list.append(dtb_learning)
 
