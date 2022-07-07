@@ -109,8 +109,10 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     # return resized_and_cropped_img_bin
 
     # 大きい盤面
-    return cv2.bitwise_not(cv2.inRange(
+    a = cv2.bitwise_not(cv2.inRange(
         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
+    img_scaled = (a/ 255.).astype(np.float32) 
+    return img_scaled
 
 
 def is_off_x8(img_gray):
@@ -151,7 +153,7 @@ class AnimalTower(gym.Env):
         # 出力サイズを変更し忘れていた!!
         self.action_space = gym.spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32)
         self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
+            low=0, high=1, shape=TRAINNING_IMAGE_SIZE, dtype=np.float32)
         self.reward_range = [0.0, 1.0]
         caps = {
             "platformName": "android",
