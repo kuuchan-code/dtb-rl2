@@ -142,6 +142,7 @@ class AnimalTower(gym.Env):
             appium_port = "4823"
             # appium_port = "4723"
         self.SCREENSHOT_PATH = f"./screenshot_{my_udid}.png"
+        self.OBSERVATION_IMAGE_PATH = f"./observation_{my_udid}.png"
         print("Initializing...", end=" ", flush=True)
         print(my_udid)
         r = [0, 4, 6, 8]
@@ -200,7 +201,7 @@ class AnimalTower(gym.Env):
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             self.prev_height = get_height(img_gray)
             self.prev_animal_count = get_animal_count(img_bgr)
-            cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+            cv2.imwrite(self.OBSERVATION_IMAGE_PATH, obs)
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
         print("Done")
@@ -275,7 +276,7 @@ class AnimalTower(gym.Env):
         self.prev_animal_count = animal_count
         self.total_step_count += 1
         # 共通処理
-        cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        cv2.imwrite(self.OBSERVATION_IMAGE_PATH, obs)
         t1 = time()
         print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
         self.t0 = t1
