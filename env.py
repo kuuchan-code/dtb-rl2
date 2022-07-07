@@ -145,6 +145,7 @@ class AnimalTower(gym.Env):
         }
         self.driver = webdriver.Remote(
             "http://localhost_main:4723/wd/hub", caps)
+        print(udid_list)
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))

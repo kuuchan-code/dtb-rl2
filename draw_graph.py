@@ -8,15 +8,43 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
+class RangeCheck(object):
+    def __init__(self, low_limit=None, high_limit=None, vtype="integer"):
+        self.min = low_limit
+        self.max = high_limit
+        self.type = vtype
+
+    def __contains__(self, val):
+        ret = True
+        if self.min is not None:
+            ret = ret and (val >= self.min)
+        if self.max is not None:
+            ret = ret and (val <= self.max)
+        return ret
+
+    def __iter__(self):
+        low = self.min
+        if low is None:
+            low = "-inf"
+        high = self.max
+        if high is None:
+            high = "+inf"
+        l1 = self.type
+        l2 = f" {low} <= x <= {high}"
+        return iter((l1, l2))
+
+
 parser = argparse.ArgumentParser(description="学習の推移を描画")
+parser.add_argument(
+    "-n", "--num-move-mean", help="移動平均で使うデータ数", type=int, choices=RangeCheck(low_limit=10), default=50
+)
 
 parser.add_argument("file", help="読み込むファイル")
 
 args = parser.parse_args()
 
 
-def main(fnamer):
-    move_mean_length = 50
+def main(fnamer, move_mean_length):
     print(fnamer)
     df = pd.read_csv(fnamer)
     # print(df)
@@ -42,4 +70,4 @@ def main(fnamer):
 
 
 if __name__ == "__main__":
-    main(args.file)
+    main(args.file, args.num_move_mean)
