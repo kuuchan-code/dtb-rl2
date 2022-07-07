@@ -139,16 +139,17 @@ class AnimalTower(gym.Env):
             with open("tmp", "w") as f:
                 pass
             my_udid = udid_list[1]
-            appium_port = "4823"
-            # appium_port = "4723"
+            # appium_port = "4823"
+            appium_port = "4723"
         self.SCREENSHOT_PATH = f"./screenshot_{my_udid}.png"
+        self.OBSERVATION_IMAGE_PATH = f"./observation_{my_udid}.png"
         print("Initializing...", end=" ", flush=True)
         print(my_udid)
-        r = [0, 4, 6, 8]
-        m = np.linspace(150.5, 929.5, 3, dtype=np.uint32)
+        r = [0, 6]
+        m = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
         self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
         # 出力サイズを変更し忘れていた!!
-        self.action_space = gym.spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32)
+        self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
@@ -200,7 +201,7 @@ class AnimalTower(gym.Env):
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             self.prev_height = get_height(img_gray)
             self.prev_animal_count = get_animal_count(img_bgr)
-            cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+            cv2.imwrite(self.OBSERVATION_IMAGE_PATH, obs)
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
         print("Done")
@@ -209,19 +210,17 @@ class AnimalTower(gym.Env):
         self.t0 = t1
         return obs
 
-    def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
+    def step(self, action_index) -> tuple[np.ndarray, float, bool, dict]:
         """
         1アクション
         """
         print(f"step({self.total_step_count + 1})")
-        # action = self.ACTION_MAP[action_index]
+        action = self.ACTION_MAP[action_index]
         # 何番目のactionか出力
-        # print(
-        #     f"Action({action_index}/{self.ACTION_MAP.shape[0]-1}), {action[0], action[1]}")
-        rotate_move = (6, int(action[0] * 1079 + 0.5))
-        print(rotate_move)
+        print(
+            f"Action({action_index}/{self.ACTION_MAP.shape[0]-1}), {action[0], action[1]}")
         # 回転と移動
-        self._rotate_and_move(rotate_move)
+        self._rotate_and_move(action)
         sleep(0.7)
         # 変数の初期化
         done = False
@@ -275,7 +274,7 @@ class AnimalTower(gym.Env):
         self.prev_animal_count = animal_count
         self.total_step_count += 1
         # 共通処理
-        cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        cv2.imwrite(self.OBSERVATION_IMAGE_PATH, obs)
         t1 = time()
         print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
         self.t0 = t1
