@@ -344,15 +344,14 @@ class AnimalTowerBattleClient(gym.Env):
         2つのプレイヤーが同じコマンド送ってもいいや
         """
         self._print_with_name("Resetting...", 2)
-        # リトライ申請
-        # self.dtb_server.add_task((self.player, "retry"))
+        # リトライはサーバの自己判断
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
         while True:
             # サーバから情報取得
             info = self.dtb_server.get_info()
             if info["turn"] == self.player:
                 break
-            self._print_with_name(info)
+            # self._print_with_name(info)
             sleep(0.5)
 
         self.prev_animal_count = info["animals"]
@@ -494,10 +493,10 @@ class AnimalTowerBattleLearning(threading.Thread):
 
         name_prefix = f"_a2c_cnn_r12m3s_p{player}"
         env = AnimalTowerBattleClient(
-            dtb_server, player, f"{name_prefix}.csv", verbose=1)
+            dtb_server, player, f"{name_prefix}.csv", verbose=verbose)
 
         self.model = A2C(policy="CnnPolicy", env=env,
-                         verbose=1, tensorboard_log="tensorboard")
+                         verbose=2, tensorboard_log="tensorboard")
         self.checkpoint_callback = CheckpointCallback(
             save_freq=100, save_path="models",
             name_prefix=name_prefix
