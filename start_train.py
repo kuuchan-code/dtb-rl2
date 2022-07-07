@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import gym, ray
-from ray.rllib.agents.ddpg import ApexDDPGTrainer
+from ray.rllib.agents import ddpg
 from env import AnimalTower
 from selenium.common.exceptions import WebDriverException
 from datetime import datetime
@@ -19,21 +19,22 @@ register_env("my_env", env_creator)
 #     print(f"{k}: {v}")
 # assert False
 
-trainer = ApexDDPGTrainer(env="my_env", config={
+print(ddpg.apex.APEX_DDPG_DEFAULT_CONFIG)
+trainer = ddpg.ApexDDPGTrainer(env="my_env", config={
     "num_workers": 2,
     "framework": "tf",
-    # "clip_rewards": False,
-    # "exploration_config":{
-    #     "ou_base_scale": 1.0
-    # },
-    # "n_step": 3,
-    # "target_network_update_freq": 10,  # 500000, 50000
-    # "tau": 1.0,
-    # "evaluation_interval": None,  # None, 5
-    # "evaluation_duration": 10,
-    # "replay_buffer_config": {
-    #     "replay_batch_size": 16  # 32
-    # }
+    "clip_rewards": False,
+    "exploration_config":{
+        "ou_base_scale": 1.0
+    },
+    "n_step": 3,
+    "target_network_update_freq": 10,  # 500000, 50000
+    "tau": 1.0,
+    "evaluation_interval": None,  # None, 5
+    "evaluation_duration": 10,
+    "replay_buffer_config": {
+        "replay_batch_size": 16  # 32
+    }
 })
 
 
