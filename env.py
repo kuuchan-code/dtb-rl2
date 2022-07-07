@@ -149,7 +149,6 @@ class AnimalTower(gym.Env):
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
-
         self.log_path = log_path
         self.total_step_count = 0
         self.episode_count = 0
