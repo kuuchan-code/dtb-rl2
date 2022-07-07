@@ -6,7 +6,6 @@ try({summary(df)})
  Mean   :2.33   Mean   :2.378  
  3rd Qu.:3.00   3rd Qu.:3.130  
  Max.   :8.00   Max.   :8.980  
-
 try({t.test(df["animals"])})
 
 	One Sample t-test
@@ -20,7 +19,6 @@ sample estimates:
 mean of x 
  2.329949 
 
-
 try({t.test(df["height"])})
 
 	One Sample t-test
@@ -33,7 +31,6 @@ alternative hypothesis: true mean is not equal to 0
 sample estimates:
 mean of x 
  2.378173 
-
 
 try({cor.test(df[,1], df[,2])})
 
