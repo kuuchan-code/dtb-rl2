@@ -3,6 +3,9 @@
 pull rayproject/ray:latest-gpu
 # sudo docker pull rayproject/ray:latest-gpu
 
+# CPUを使う場合
+# docker pull rayproject/ray:latest-cpu
+
 # run rayproject/ray:latest-gpu
 # sudo docker run -t -i --gpus all --shm-size=2.41gb -v ~/dtb-rl2:/home/ray/dtb-rl2 rayproject/ray:latest-gpu
 
