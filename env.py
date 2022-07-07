@@ -103,7 +103,7 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     # cropped_img_bin = img_bin[:1665, 295:785]
     # resized_and_cropped_img_bin = cv2.resize(cropped_img_bin, TRAINNING_IMAGE_SIZE)
     # return resized_and_cropped_img_bin
-    
+
     # 大きい盤面
     return cv2.bitwise_not(cv2.inRange(
         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
@@ -128,10 +128,9 @@ class AnimalTower(gym.Env):
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
         print("Initializing...", end=" ", flush=True)
         r = [0, 4, 6, 8]
-        m = [150, 540, 929]
+        m = np.linspace(150, 929, 11, dtype=np.uint32)
         self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
-        np.random.seed(0)
-        np.random.shuffle(self.ACTION_MAP)
+        # 出力サイズを変更し忘れていた!!
         self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
@@ -151,8 +150,10 @@ class AnimalTower(gym.Env):
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
 
         self.log_path = log_path
+        self.total_step_count = 0
         self.episode_count = 0
         self.log_episode_max = log_episode_max
+
         # ヘッダのみ書き込み
         with open(self.log_path, "w") as f:
             print(f"animals,height", file=f)
@@ -167,6 +168,7 @@ class AnimalTower(gym.Env):
         """
         リセット
         """
+        print(f"episode({self.episode_count + 1})")
         print("Resetting...", end=" ", flush=True)
         self.prev_height = None
         self.prev_animal_count = None
@@ -194,8 +196,11 @@ class AnimalTower(gym.Env):
         """
         1アクション
         """
+        print(f"step({self.total_step_count + 1})")
         action = self.ACTION_MAP[action_index]
-        print(f"Action({action[0], action[1]})")
+        # 何番目のactionか出力
+        print(
+            f"Action({action_index}/{self.ACTION_MAP.shape[0]-1}), {action[0], action[1]}")
         # 回転と移動
         self._rotate_and_move(action)
         sleep(0.7)
@@ -207,12 +212,15 @@ class AnimalTower(gym.Env):
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            # x8 speederが無効化された場合
             if is_off_x8(img_gray):
                 print("x8 speederを適用")
                 self._tap((1032, 1857))
                 sleep(0.5)
                 self._tap((726, 1171))
-                sleep(7)
+                sleep(5)
+                # 画像は再読込
+                continue
             # ループで必ず高さと動物数を取得
             height = get_height(img_gray)
             animal_count = get_animal_count(img_bgr)
@@ -222,6 +230,7 @@ class AnimalTower(gym.Env):
             if is_result_screen(img_gray):
                 print("Game over")
                 done = True
+                # ログファイルに書き出し
                 with open(self.log_path, "a") as f:
                     print(f"{self.prev_animal_count},{self.prev_height}", file=f)
                 self.episode_count += 1
@@ -241,9 +250,11 @@ class AnimalTower(gym.Env):
                 print("No height update")
                 reward = 1.0
                 break
+            sleep(0.1)
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
+        self.total_step_count += 1
         # 共通処理
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         t1 = time()
@@ -260,21 +271,25 @@ class AnimalTower(gym.Env):
         """
         self.operations.w3c_actions.pointer_action.move_to_location(
             *coordinates)
-        self.operations.w3c_actions.pointer_action.pointer_down()
-        self.operations.w3c_actions.pointer_action.release()
+        self.operations.w3c_actions.pointer_action.click()
         self.operations.perform()
 
     def _rotate_and_move(self, a: np.ndarray) -> None:
         """
         高速化のために回転と移動を同時に操作
+        移動の前にperformをしないとバグる
         """
         # 回転タップ
-        self.operations.w3c_actions.pointer_action.move_to_location(
-            *COORDINATES_ROTATE30)
-        for _ in range(a[0]):
-            self.operations.w3c_actions.pointer_action.click()
-            self.operations.w3c_actions.pointer_action.pause(0.05)
-        self.operations.w3c_actions.perform()
+        # 0回転は処理を短縮
+        if a[0] > 0:
+            self.operations.w3c_actions.pointer_action.move_to_location(
+                *COORDINATES_ROTATE30)
+            for _ in range(a[0]):
+                self.operations.w3c_actions.pointer_action.click()
+                # 試した感じ0.05がバグらない最低値
+                self.operations.w3c_actions.pointer_action.pause(0.05)
+            # 重要
+            self.operations.w3c_actions.perform()
         # 座標タップ
         self.operations.w3c_actions.pointer_action.move_to_location(
             a[1], 800)

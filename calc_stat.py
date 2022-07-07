@@ -2,14 +2,46 @@
 """
 統計値計算
 """
+from __future__ import annotations
 import pyper
 import pandas as pd
 import argparse
 import os
 
+
+class RangeCheck(object):
+    def __init__(self, low_limit=None, high_limit=None, vtype="integer"):
+        self.min = low_limit
+        self.max = high_limit
+        self.type = vtype
+
+    def __contains__(self, val):
+        ret = True
+        if self.min is not None:
+            ret = ret and (val >= self.min)
+        if self.max is not None:
+            ret = ret and (val <= self.max)
+        return ret
+
+    def __iter__(self):
+        low = self.min
+        if low is None:
+            low = "-inf"
+        high = self.max
+        if high is None:
+            high = "+inf"
+        l1 = self.type
+        l2 = f" {low} <= x <= {high}"
+        return iter((l1, l2))
+
+
 parser = argparse.ArgumentParser(description="エピソード終了時の動物数, 高さの統計量計算")
 
 parser.add_argument("file", help="読み込むファイル")
+parser.add_argument(
+    "-n", "--new", help="新しいデータのみ (データ数を与える)", type=int, choices=RangeCheck(low_limit=10)
+)
+
 
 args = parser.parse_args()
 
@@ -18,26 +50,28 @@ for i in range(10):
     r("")
 
 
-def main(fnamer):
-    # print(fnamer)
+def main(fnamer: str, new_data_num: int | None):
     df = pd.read_csv(fnamer)
+    b_name = os.path.basename(fnamer).split('.', 1)[0]
+    if new_data_num is None:
+        fnamew = f"statistics/{b_name}.txt"
+    else:
+        df = df[-new_data_num:]
+        fnamew = f"statistics/{b_name}_new{new_data_num}.txt"
+    # print(df)
     r.assign("df", df)
     # print(r('df["animals"]'))
+    moji = r("summary(df)")
     # t検定
-    print(r("summary(df)"))
-    print(r('t.test(df["animals"])'))
-    print(r('t.test(df["height"])'))
+    moji += r('t.test(df["animals"])')
+    moji += r('t.test(df["height"])')
     # ピアソンの積率相関係数
-    print(r('cor.test(df[,1], df[,2])'))
-    # print()
-    fnamew = f"statistics/{os.path.basename(fnamer).split('.', 1)[0]}.txt"
+    moji += r('cor.test(df[,1], df[,2])')
+    print(moji)
     with open(fnamew, "w") as f:
-        print(r("summary(df)"), file=f)
-        print(r('t.test(df["animals"])'), file=f)
-        print(r('t.test(df["height"])'), file=f)
-        print(r('cor.test(df[,1], df[,2])'), file=f)
+        print(moji, file=f)
     # print(r('df[,1]'))
 
 
 if __name__ == "__main__":
-    main(args.file)
+    main(args.file, args.new)
