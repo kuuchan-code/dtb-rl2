@@ -22,6 +22,7 @@ register_env("my_env", env_creator)
 trainer = ApexDDPGTrainer(env="my_env", config={
     "num_workers": 2,
     "learning_starts": 10,
+    "replay_batch_size": 16,
 })
 
 
