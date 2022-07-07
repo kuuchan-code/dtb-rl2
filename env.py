@@ -12,6 +12,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.actions.pointer_input import PointerInput
 from selenium.webdriver.common.actions import interaction
+import random as rd
+import os
 
 
 SCREENSHOT_PATH = "./screenshot.png"
@@ -31,7 +33,9 @@ BLACK = np.zeros(3, dtype=np.uint8)
 WHITE = BLACK + 255
 WHITE_DARK = WHITE - 15
 
-udid_list = ["CB512C5QDQ", "P3PDU18321001333"]
+global_idx = 0
+
+udid_list = ["P3PDU18321001333", "353477091491152", "CB512C5QDQ"]
 
 def is_result_screen(img_gray: np.ndarray) -> bool:
     """
@@ -126,7 +130,20 @@ class AnimalTower(gym.Env):
     """
 
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
+        sleep(rd.random() * 5)
+        if os.path.exists("tmp"):
+            os.remove("tmp")
+            my_udid = udid_list[0]
+            appium_port = "4723"
+        else:
+            with open("tmp", "w") as f:
+                pass
+            my_udid = udid_list[1]
+            appium_port = "4823"
+            # appium_port = "4723"
+        self.SCREENSHOT_PATH = f"./screenshot_{my_udid}.png"
         print("Initializing...", end=" ", flush=True)
+        print(my_udid)
         r = [0, 4, 6, 8]
         m = np.linspace(150.5, 929.5, 3, dtype=np.uint32)
         self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
@@ -137,15 +154,15 @@ class AnimalTower(gym.Env):
         self.reward_range = [0.0, 1.0]
         caps = {
             "platformName": "android",
-            "appium:udid": udid_list.pop(0),
+            "appium:udid": my_udid,
             "appium:ensureWebviewHavePages": True,
             "appium:nativeWebScreenshot": True,
             "appium:newCommandTimeout": 3600,
             "appium:connectHardwareKeyboard": True
         }
+        print(f"http://localhost_main:{appium_port}/wd/hub")
         self.driver = webdriver.Remote(
-            "http://localhost_main:4723/wd/hub", caps)
-        print(udid_list)
+            f"http://localhost_main:{appium_port}/wd/hub", caps)
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
@@ -177,8 +194,8 @@ class AnimalTower(gym.Env):
             # リトライボタンをタップして3秒待つ
             self._tap(COORDINATES_RETRY)
             sleep(0.5)
-            self.driver.save_screenshot(SCREENSHOT_PATH)
-            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+            self.driver.save_screenshot(self.SCREENSHOT_PATH)
+            img_bgr = cv2.imread(self.SCREENSHOT_PATH, 1)
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             self.prev_height = get_height(img_gray)
@@ -208,8 +225,8 @@ class AnimalTower(gym.Env):
         done = False
         reward = 0.0
         while True:
-            self.driver.save_screenshot(SCREENSHOT_PATH)
-            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+            self.driver.save_screenshot(self.SCREENSHOT_PATH)
+            img_bgr = cv2.imread(self.SCREENSHOT_PATH, 1)
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             # x8 speederが無効化された場合

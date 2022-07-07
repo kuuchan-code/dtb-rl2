@@ -20,7 +20,7 @@ register_env("my_env", env_creator)
 # assert False
 
 trainer = dqn.DQNTrainer(env="my_env", config={
-    "num_workers": 1,
+    "num_workers": 2,
     "num_atoms": 51,
     "noisy": True,
     "gamma": 0.99,
@@ -44,8 +44,11 @@ trainer = dqn.DQNTrainer(env="my_env", config={
         "grayscale": True,
         "zero_mean": False,
         "dim": 42
-    }
+    },
+    "disable_env_checking": True,
+    "ignore_worker_failures": True
 })
+
 
 trainer.train()
 with open("/home/ray/dtb-rl2/a.txt", "w") as f:
