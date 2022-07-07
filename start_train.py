@@ -22,7 +22,16 @@ register_env("my_env", env_creator)
 trainer = ApexDDPGTrainer(env="my_env", config={
     "num_workers": 2,
     "learning_starts": 10,
-    "replay_batch_size": 16,
+    "framework": "tf",
+    "clip_rewards": False,
+    "exploration_config":{
+        "ou_base_scale": 1.0
+    },
+    "n_step": 3,
+    "target_network_update_freq": 100,
+    "tau": 1.0,
+    "evaluation_interval": 5,
+    "evaluation_duration": 10
 })
 
 
