@@ -151,9 +151,13 @@ class AnimalTowerBattleServer(threading.Thread):
         # タスクを溜めるバッファ
         self.task_queue = []
 
-        # どちらが先手後手か決める
-        # [Player1のターン, Player2のターン]
-        self.turns = [0, 1]
+        # 先手のプレイヤー番号
+        # 0ならPlayer0, 1がそれぞれ先手, 後手
+        # 1なら逆
+        self.player_sente = rd.randint(0, 1)
+        self._print_with_name(
+            f"先手: {self.player_sente}, 後手: {self.player_sente ^ 1}", 1)
+
         self.info = {
             "img_bgr": None,
             "img_gray": None,
@@ -185,9 +189,11 @@ class AnimalTowerBattleServer(threading.Thread):
             if self.info["x8_disabled"]:
                 self._print_with_name("x8 speeder を適用", 1)
                 self.add_task(("server", "apply_x8"))
+            # リセット画面
             if self.info["end"]:
                 self._print_with_name("リセット処理", 1)
                 self.add_task(("server", "retry"))
+            self._print_with_name(f'{self.info["turn"]}')
 
     def _create_info(self):
         """
@@ -206,7 +212,7 @@ class AnimalTowerBattleServer(threading.Thread):
         if tmp_info["animals"] is None:
             tmp_info["turn"] = None
         else:
-            tmp_info["turn"] = tmp_info["animals"] & 1
+            tmp_info["turn"] = tmp_info["animals"] & 1 ^ self.player_sente
         return tmp_info.copy()
 
     def get_info(self):
@@ -283,17 +289,25 @@ class AnimalTowerBattleServer(threading.Thread):
         """
         リセットするまでずっとここにいる
         """
+        tmp_info = self.info.copy()
         # 初期の高さと動物数を取得できるまでループ
-        while not self.info["valid"]:
+        while not tmp_info["valid"]:
             # リトライボタンをタップして少し待つ
             self._tap(COORDINATES_RETRY)
             sleep(0.5)
             # リセットが確認できるまでスクショ
             self.driver.save_screenshot(SCREENSHOT_PATH)
-            # 情報計算
-            self.info = self._create_info()
+            # 情報計算 (非公開)
+            tmp_info = self._create_info()
+        sleep(3)
+        self.info = tmp_info.copy()
+
         print("-"*NUM_OF_DELIMITERS)
         self._print_with_name("リセット完了")
+
+        self.player_sente = rd.randint(0, 1)
+        self._print_with_name(
+            f"先手: {self.player_sente}, 後手: {self.player_sente ^ 1}", 1)
 
     def _apply_x8(self):
         """
@@ -429,7 +443,7 @@ class AnimalTowerBattleClient(gym.Env):
             obs_3d = np.reshape(info["obs"], (1, *TRAINNING_IMAGE_SIZE))
         # 自分のターン待ち
         # 相手の行動後の状態を観測値とする
-        elif info["turn"] != self.player:
+        else:
             obs_3d, reward, done, _ = self._wait_for_my_turn()
 
         t1 = time()
