@@ -62,7 +62,18 @@ class AnimalTower(gym.Env):
         self.prev_height = None
         self.prev_animal_count = None
 
-        self.device = AnimalTowerDevice()
+        # udidを選択
+        if os.path.exists("idx.pickle"):
+            with open("idx.pickle", "rb") as pickle_f:
+                i = pickle.load(pickle_f)
+        else:
+            i = 0
+        udid = udid_list[i]
+        with open("idx.pickle", "wb") as pickle_f:
+            pickle.dump((i + 1) % len(udid_list), pickle_f)
+        sleep(rd.random() * 10)
+        print(f"Connecting to {udid}...")
+        self.device = AnimalTowerDevice(udid)
 
         self.total_step_count = 0
         self.episode_count = 0
@@ -199,18 +210,7 @@ class AnimalTowerDevice():
     どうぶつタワーが起動してるデバイスに関するクラス
     """
 
-    def __init__(self, x8_enabled=True):
-        # udidを選択
-        if os.path.exists("idx.pickle"):
-            with open("idx.pickle", "rb") as pickle_f:
-                i = pickle.load(pickle_f)
-        else:
-            i = 0
-        udid = udid_list[i]
-        with open("idx.pickle", "wb") as pickle_f:
-            pickle.dump((i + 1) % len(udid_list), pickle_f)
-        sleep(rd.random() * 10)
-        print(f"Connecting to {udid}...")
+    def __init__(self, udid, x8_enabled=True):
         caps = {
             "platformName": "android",
             "appium:udid": udid,
