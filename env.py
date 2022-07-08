@@ -40,7 +40,7 @@ def is_result_screen(img_gray: np.ndarray, mag=1.0) -> bool:
     template = cv2.resize(template, (int(w*mag), int(h*mag)))
     res = cv2.matchTemplate(
         img_gray, template, cv2.TM_CCOEFF_NORMED)
-    print("バックボタン一致率", res.max())
+    # print("バックボタン一致率", res.max())
     return res.max() >= TEMPLATE_MATCHING_THRESHOLD
 
 
@@ -57,15 +57,18 @@ def get_height(img_gray: np.ndarray, mag=1.0) -> float | None:
         res = cv2.matchTemplate(
             img_gray_height, template, cv2.TM_CCOEFF_NORMED)
         loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
+        # print(loc)
         for loc_y in loc[1]:
-            print(res[loc[0], loc[1]])
             dict_digits[loc_y] = i
     height = ""
-    for key in sorted(dict_digits.items()):
-        if key[1] == "dot":
-            height += "."
-        else:
-            height += str(key[1])
+    prev_x = -float("inf")
+    for x, key in sorted(dict_digits.items()):
+        if x - prev_x >= 5:
+            if key == "dot":
+                height += "."
+            else:
+                height += str(key)
+        prev_x = x
     if height:
         height = float(height)
     else:
@@ -91,9 +94,14 @@ def get_animal_count(img_bgr: np.ndarray, mag=1.0) -> int | None:
         loc = np.where(res >= ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD)
         for loc_y in loc[1]:
             dict_digits[loc_y] = i
-    if dict_digits:
-        animal_num = int("".join([str(i)
-                         for _, i in sorted(dict_digits.items())]))
+    animal_num = ""
+    prev_x = -float("inf")
+    for x, key in sorted(dict_digits.items()):
+        if x - prev_x >= 5:
+            animal_num += str(key)
+        prev_x = x
+    if animal_num:
+        animal_num = int(animal_num)
     else:
         animal_num = None
     return animal_num
