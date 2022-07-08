@@ -14,17 +14,14 @@ from selenium.common.exceptions import WebDriverException
 name_prefix = "_a2c_cnn_r4m11b"
 # 時刻
 now_str = datetime.now().strftime("%Y%m%d%H%M%S")
-# print(f"{name_prefix}_{now_str}.csv")
-# assert False
-env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv")
 
 # 最新のモデルを読み込むように
 model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
-# model_path = "models/a2c_cnn_rotate_move11_bin_1950_steps.zip"
+print(f"Load {model_path}")
+env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv")
 
 model = A2C.load(path=model_path,
                  env=env, tensorboard_log="tensorboard", device="cpu")
-print(f"Loaded {model_path}")
 
 
 checkpoint_callback = CheckpointCallback(save_freq=50, save_path="models",
