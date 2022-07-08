@@ -44,23 +44,6 @@ udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
 # udid_list = ["353010080451240", "CB512C5QDQ"]
 
 
-def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
-    """
-    入力BGR画像を訓練用画像にする
-    """
-    # 小さい盤面
-    # img_bin = cv2.bitwise_not(cv2.inRange(
-    #     img_bgr, BACKGROUND_COLOR_DARK, WHITE))
-    # cropped_img_bin = img_bin[:1665, 295:785]
-    # resized_and_cropped_img_bin = cv2.resize(cropped_img_bin, TRAINNING_IMAGE_SIZE)
-    # return resized_and_cropped_img_bin
-
-    # 大きい盤面
-
-    return cv2.bitwise_not(cv2.inRange(
-        cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
-
-
 class AnimalTower(gym.Env):
     """
     Small base for the Animal Tower, action is 12 turns gym environment
@@ -107,8 +90,9 @@ class AnimalTower(gym.Env):
             sleep(self.device.retry_intarval)
             self.device.driver.save_screenshot(self.device.screenshot_path)
             self.device.img_bgr = cv2.imread(self.device.screenshot_path, 1)
-            obs = to_training_image(img_bgr)
-            self.device.img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            obs = self.device.to_training_image()
+            self.device.img_gray = cv2.cvtColor(
+                self.device.img_bgr, cv2.COLOR_BGR2GRAY)
             self.prev_height = self.device.get_height(
                 mag=self.device.height_mag)
             self.prev_animal_count = self.device.get_animal_count(
@@ -140,7 +124,7 @@ class AnimalTower(gym.Env):
             self.device.driver.save_screenshot(self.device.screenshot_path)
             self.device.img_bgr = cv2.imread(self.device.screenshot_path, 1)
             try:
-                obs = to_training_image(self.device.img_bgr)
+                obs = self.device.to_training_image()
             except Exception as inst:
                 print(type(inst))
                 print(inst.args)
@@ -236,12 +220,12 @@ class AnimalTowerDevice():
         self.screenshot_path = f"./screenshot_{udid}.png"
         self.driver.save_screenshot(self.screenshot_path)
         self.img_bgr = cv2.imread(self.screenshot_path, 1)
-        self.mag = img_bgr.shape[0] / 1920, img_bgr.shape[1] / 1080
+        self.mag = self.img_bgr.shape[0] / 1920, self.img_bgr.shape[1] / 1080
         self.actions = ActionChains(self.driver)
         self.actions.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
-        self.height_mag = img_bgr.shape[0] / 1920
-        self.width_mag = img_bgr.shape[1] / 1080
+        self.height_mag = self.img_bgr.shape[0] / 1920
+        self.width_mag = self.img_bgr.shape[1] / 1080
         self.move_tap_height = 800 * self.height_mag
         # そもそもx8が使えない
         if udid == "482707805697":
@@ -255,7 +239,8 @@ class AnimalTowerDevice():
             self.tap_intarval = 0.2
             self.retry_intarval = 2
             self.pooling_intarval = 0.4
-        print(f"Connected localhost:4723/wd/hub: {udid}, {img_bgr.shape}, {x8_enabled}")
+        print(
+            f"Connected localhost:4723/wd/hub: {udid}, {self.img_bgr.shape}, {x8_enabled}")
 
         self.img_gray = None
         self.img_bgr = None
@@ -382,3 +367,20 @@ class AnimalTowerDevice():
         self.actions.w3c_actions.pointer_action.click()
         # 適用
         self.actions.w3c_actions.perform()
+
+    def to_training_image(self) -> np.ndarray:
+        """
+        入力BGR画像を訓練用画像にする
+        """
+        # 小さい盤面
+        # img_bin = cv2.bitwise_not(cv2.inRange(
+        #     img_bgr, BACKGROUND_COLOR_DARK, WHITE))
+        # cropped_img_bin = img_bin[:1665, 295:785]
+        # resized_and_cropped_img_bin = cv2.resize(cropped_img_bin, TRAINNING_IMAGE_SIZE)
+        # return resized_and_cropped_img_bin
+
+        # 大きい盤面
+
+        return cv2.bitwise_not(cv2.inRange(
+            cv2.resize(self.img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]),
+            BACKGROUND_COLOR_DARK, WHITE))
