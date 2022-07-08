@@ -16,8 +16,8 @@ from selenium.webdriver.common.actions import interaction
 
 SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
-TEMPLATE_MATCHING_THRESHOLD = 0.99
-ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.984
+TEMPLATE_MATCHING_THRESHOLD = 0.95
+ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.85
 TRAINNING_IMAGE_SIZE = 256, 75  # small
 TRAINNING_IMAGE_SIZE = 256, 144  # big
 NUM_OF_DELIMITERS = 36
@@ -51,12 +51,12 @@ def get_height(img_gray: np.ndarray, mag=1.0) -> float | None:
     dict_digits = {}
     for i in list(range(10))+["dot"]:
         template = cv2.imread(f"src/height{i}.png", 0)
-        print(template.shape)
         h, w = template.shape
         template = cv2.resize(template, (int(w*mag), int(h*mag)))
-        print(template.shape)
+        # print(template.shape)
         res = cv2.matchTemplate(
             img_gray_height, template, cv2.TM_CCOEFF_NORMED)
+        # print(res.max())
         loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
         for loc_y in loc[1]:
             dict_digits[loc_y] = i
@@ -73,18 +73,21 @@ def get_height(img_gray: np.ndarray, mag=1.0) -> float | None:
     return height
 
 
-def get_animal_count(img_bgr: np.ndarray) -> int | None:
+def get_animal_count(img_bgr: np.ndarray, mag=1.0) -> int | None:
     """
     動物の数を取得
     引数にはカラー画像を与える!!
     """
     img_shadow = cv2.inRange(
-        img_bgr[264:328], BACKGROUND_COLOR_DARK, WHITE)
+        img_bgr[int(264*mag):int(328*mag)], BACKGROUND_COLOR_DARK, WHITE)
     dict_digits = {}
     for i in range(10):
         template = cv2.imread(f"src/count{i}_shadow.png", 0)
+        h, w = template.shape
+        template = cv2.resize(template, (int(w*mag), int(h*mag)))
         res = cv2.matchTemplate(
             img_shadow, template, cv2.TM_CCOEFF_NORMED)
+        # print(i, res.max())
         loc = np.where(res >= ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD)
         for loc_y in loc[1]:
             dict_digits[loc_y] = i
@@ -156,7 +159,7 @@ class AnimalTower(gym.Env):
 
         self.move_tap_height = 800 * self.height_mag
 
-        print(self.height_mag, self.width_mag, self.move_tap_height)
+        # print(self.height_mag, self.width_mag, self.move_tap_height)
 
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
@@ -205,7 +208,8 @@ class AnimalTower(gym.Env):
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             self.prev_height = get_height(img_gray, mag=self.height_mag)
-            self.prev_animal_count = get_animal_count(img_bgr)
+            self.prev_animal_count = get_animal_count(
+                img_bgr, mag=self.height_mag)
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
             # デバッグ
             print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
@@ -296,7 +300,7 @@ class AnimalTower(gym.Env):
         """
         x = coordinates[0] * self.width_mag
         y = coordinates[1] * self.height_mag
-        print(x, y)
+        # print(x, y)
         self.operations.w3c_actions.pointer_action.move_to_location(
             x, y)
         self.operations.w3c_actions.pointer_action.click()
