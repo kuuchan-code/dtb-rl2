@@ -23,7 +23,7 @@ model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
 # model_path = "models/a2c_cnn_rotate_move11_bin_1950_steps.zip"
 
 model = A2C.load(path=model_path,
-                 env=env, tensorboard_log="tensorboard")
+                 env=env, tensorboard_log="tensorboard", device="cpu")
 print(f"Loaded {model_path}")
 
 

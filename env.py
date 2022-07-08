@@ -162,6 +162,7 @@ class AnimalTower(gym.Env):
         # 解像度チェッカー
         self.driver.save_screenshot(SCREENSHOT_PATH)
         img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+        print(img_bgr.shape)
         self.height_mag = img_bgr.shape[0] / 1920
         self.width_mag = img_bgr.shape[1] / 1080
 
