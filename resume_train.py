@@ -4,34 +4,40 @@
 """
 import glob
 import os
-from stable_baselines3 import A2C
-from stable_baselines3.common.callbacks import CheckpointCallback
+from ray.rllib.agents import dqn
 from env import AnimalTower
 from datetime import datetime
 from selenium.common.exceptions import WebDriverException
+import argparse
 
-# 識別子
-name_prefix = "_a2c_cnn_r4m11b"
-# 時刻
-now_str = datetime.now().strftime("%Y%m%d%H%M%S")
-# print(f"{name_prefix}_{now_str}.csv")
-# assert False
-env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv")
+parser = argparse.ArgumentParser(description="訓練を再開")
+parser.add_argument("file", help="読み込むcheckpointファイル")
 
-# 最新のモデルを読み込むように
-model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
-# model_path = "models/a2c_cnn_rotate_move11_bin_1950_steps.zip"
+args = parser.parse_args()
 
-model = A2C.load(path=model_path,
-                 env=env, tensorboard_log="tensorboard")
-print(f"Loaded {model_path}")
+trainer = dqn.R2D2Trainer(env="my_env", config={
+    "framework": "tf",
+    # R2D2 settings.
+    "num_workers": 3,
+    "compress_observations": True,
+    "exploration_config": {
+        "epsilon_timesteps": 40  # 10000
+    },
+    "target_network_update_freq": 10,  # 2500
+    "model": {
+        "fcnet_hiddens": [256, 256],  # [256, 256]
+        "use_lstm": True,  # False
+        "lstm_cell_size": 256,  # 256
+        "max_seq_len": 20  # 20
+    },
+    "disable_env_checking": True,
+    "timesteps_per_iteration": 1
+})
 
+trainer.restore(args.file)
 
-checkpoint_callback = CheckpointCallback(save_freq=50, save_path="models",
-                                         name_prefix=name_prefix)
-try:
-    model.learn(total_timesteps=10000, callback=[checkpoint_callback])
-except WebDriverException as e:
-    print("接続切れ?")
-except KeyboardInterrupt as e:
-    print("キーボード割り込み")
+for i in range(10000):
+    print(trainer.train())
+    if i % 100 == 0:
+        checkpoint = trainer.save()
+        print("checkpoint saved at", checkpoint)

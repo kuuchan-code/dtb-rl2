@@ -72,7 +72,7 @@ class AnimalTower(gym.Env):
         with open("idx.pickle", "wb") as pickle_f:
             pickle.dump((i + 1) % len(udid_list), pickle_f)
         sleep(rd.random() * 10)
-        print(f"Connecting to localhost:4723/wd/hub {udid}...")
+        print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
         self.device = AnimalTowerDevice(udid)
 
         self.total_step_count = 0
@@ -243,7 +243,7 @@ class AnimalTowerDevice():
             self.retry_intarval = 2
             self.pooling_intarval = 0.4
         print(
-            f"Connected to {udid},  res{self.img_bgr.shape[:2]}, x8{x8_enabled}")
+            f"Connected to {udid},  res{self.img_bgr.shape[:2]}, x8({x8_enabled})")
 
         self.img_gray = None
         self.img_bgr = None

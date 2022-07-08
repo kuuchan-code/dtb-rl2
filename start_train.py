@@ -24,7 +24,7 @@ register_env("my_env", env_creator)
 trainer = dqn.R2D2Trainer(env="my_env", config={
     "framework": "tf",
     # R2D2 settings.
-    "num_workers": 3,
+    "num_workers": 1,
     "compress_observations": True,
     "exploration_config": {
         "epsilon_timesteps": 40  # 10000
@@ -37,7 +37,7 @@ trainer = dqn.R2D2Trainer(env="my_env", config={
         "max_seq_len": 20  # 20
     },
     "disable_env_checking": True,
-    "timesteps_per_iteration", 1
+    "timesteps_per_iteration": 1
 })
 
 
