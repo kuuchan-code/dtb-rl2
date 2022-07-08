@@ -43,14 +43,18 @@ def is_result_screen(img_gray: np.ndarray) -> bool:
     return res.max() >= TEMPLATE_MATCHING_THRESHOLD
 
 
-def get_height(img_gray: np.ndarray) -> float | None:
+def get_height(img_gray: np.ndarray, mag=1.0) -> float | None:
     """
     Get height
     """
-    img_gray_height = img_gray[65:129, :]
+    img_gray_height = img_gray[int(60*mag):int(130*mag), :]
     dict_digits = {}
     for i in list(range(10))+["dot"]:
         template = cv2.imread(f"src/height{i}.png", 0)
+        print(template.shape)
+        h, w = template.shape
+        template = cv2.resize(template, (int(w*mag), int(h*mag)))
+        print(template.shape)
         res = cv2.matchTemplate(
             img_gray_height, template, cv2.TM_CCOEFF_NORMED)
         loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
@@ -200,7 +204,7 @@ class AnimalTower(gym.Env):
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-            self.prev_height = get_height(img_gray)
+            self.prev_height = get_height(img_gray, mag=self.height_mag)
             self.prev_animal_count = get_animal_count(img_bgr)
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
             # デバッグ
