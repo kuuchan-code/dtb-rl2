@@ -22,7 +22,6 @@ TRAINNING_IMAGE_SIZE = 256, 75  # small
 TRAINNING_IMAGE_SIZE = 256, 144  # big
 NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
-COORDINATES_ROTATE30 = 500, 1800
 COORDINATES_CENTER = 540, 800
 # 背景色 (bgr)
 BACKGROUND_COLOR = np.array([251, 208, 49], dtype=np.uint8)
@@ -249,8 +248,8 @@ class AnimalTower(gym.Env):
                 # 画像は再読込
                 continue
             # ループで必ず高さと動物数を取得
-            height = get_height(img_gray)
-            animal_count = get_animal_count(img_bgr)
+            height = get_height(img_gray, mag=self.height_mag)
+            animal_count = get_animal_count(img_bgr, mag=self.width_mag)
             print(
                 f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
             # 終端
@@ -315,7 +314,7 @@ class AnimalTower(gym.Env):
         # 0回転は処理を短縮
         if a[0] > 0:
             self.operations.w3c_actions.pointer_action.move_to_location(
-                *COORDINATES_ROTATE30)
+                500 * self.width_mag, 1800 * self.height_mag)
             for _ in range(a[0]):
                 self.operations.w3c_actions.pointer_action.click()
                 # 試した感じ0.05がバグらない最低値
