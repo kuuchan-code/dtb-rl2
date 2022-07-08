@@ -25,7 +25,7 @@ print(dqn.R2D2_DEFAULT_CONFIG)
 trainer = dqn.R2D2Trainer(env="my_env", config={
     "framework": "tf",
     # R2D2 settings.
-    "num_workers": len(udid_list),
+    "num_workers": 3,
     "compress_observations": True,
     "exploration_config": {
         "epsilon_timesteps": 40  # 10000
@@ -37,13 +37,11 @@ trainer = dqn.R2D2Trainer(env="my_env", config={
         "lstm_cell_size": 256,  # 256
         "max_seq_len": 20  # 20
     },
-    "disable_env_checking": True
+    "disable_env_checking": True,
+    "timesteps_per_iteration", 1
 })
 
 
-# trainer.train()
-# with open("/home/ray/dtb-rl2/a.txt", "w") as f:
-#     print("あ", file=f)
 for i in range(10000):
     print(trainer.train())
     if i % 100 == 0:
