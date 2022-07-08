@@ -189,6 +189,10 @@ class AnimalTower(gym.Env):
     def render(self, mode=None):
         pass
 
+    def close(self):
+        print("Close the appium connection")
+        self.device.driver.quit()
+
 
 class AnimalTowerDevice():
     """
