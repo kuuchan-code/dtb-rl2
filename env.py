@@ -266,11 +266,11 @@ class AnimalTower(gym.Env):
         # 変数の初期化
         done = False
         reward = 0.0
+        # 動物登場時の煙
+        maybe_smoke = True
         while True:
             self.driver.save_screenshot(self.SCREENSHOT_PATH)
             img_bgr = cv2.imread(self.SCREENSHOT_PATH, 1)
-            if img_bgr is None:
-                continue
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             # x8 speederが無効化された場合
@@ -301,14 +301,17 @@ class AnimalTower(gym.Env):
             elif height is None or animal_count is None:
                 print("結果画面遷移中")
                 pass
-            # 高さ更新を検知
-            elif height > self.prev_height:
-                print(f"Height update: {height}m")
-                reward = 1.0
-                break
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
-                print("No height update")
+                # 更新があっても, 煙があるかもしれないので撮り直し
+                if maybe_smoke:
+                    maybe_smoke = False
+                    continue
+                # ついでに高さ更新を検知
+                if height > self.prev_height:
+                    print(f"Height update: {height}m")
+                else:
+                    print("No height update")
                 reward = 1.0
                 break
             sleep(self.pooling_intarval)
