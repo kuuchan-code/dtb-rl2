@@ -12,7 +12,7 @@ from datetime import datetime
 import json
 
 
-name_prefix = "_dqn_cnn_r4m3b_bin"
+name_prefix = "_dqn_cnn_r4m11b_bin"
 now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 
 # udidはAndroid5の白いやつ
