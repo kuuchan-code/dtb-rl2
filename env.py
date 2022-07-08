@@ -5,16 +5,16 @@ from __future__ import annotations
 import pickle
 import itertools
 from time import sleep, time
+import random as rd
+import os
 import gym
 import numpy as np
-import cv2
+from cv2 import cv2
 from appium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.actions.pointer_input import PointerInput
 from selenium.webdriver.common.actions import interaction
-import random as rd
-import os
 
 
 SCREENSHOT_PATH = "./screenshot.png"
@@ -33,7 +33,9 @@ BLACK = np.zeros(3, dtype=np.uint8)
 WHITE = BLACK + 255
 WHITE_DARK = WHITE - 15
 
-global_idx = 0
+GLOBAL_IDX = 0
+LOG_PATH = "train.csv"
+LOG_EPISODE_MAX = 0x7fffffff
 
 # あさひくんの、私の、園田さん("CB512C5QDQ")の、
 udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
@@ -48,8 +50,8 @@ def is_result_screen(img_gray: np.ndarray, mag=1.0) -> bool:
     Check the back button to determine game end.
     """
     template = cv2.imread("src/back.png", 0)
-    h, w = template.shape
-    template = cv2.resize(template, (int(w*mag), int(h*mag)))
+    height, width = template.shape
+    template = cv2.resize(template, (int(width*mag), int(height*mag)))
     res = cv2.matchTemplate(
         img_gray, template, cv2.TM_CCOEFF_NORMED)
     # print("バックボタン一致率", res.max())
@@ -64,8 +66,8 @@ def get_height(img_gray: np.ndarray, mag=1.0) -> float | None:
     dict_digits = {}
     for i in list(range(10))+["dot"]:
         template = cv2.imread(f"src/height{i}.png", 0)
-        h, w = template.shape
-        template = cv2.resize(template, (int(w*mag), int(h*mag)))
+        height, width = template.shape
+        template = cv2.resize(template, (int(width*mag), int(height*mag)))
         res = cv2.matchTemplate(
             img_gray_height, template, cv2.TM_CCOEFF_NORMED)
         loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
@@ -73,14 +75,14 @@ def get_height(img_gray: np.ndarray, mag=1.0) -> float | None:
         for loc_y in loc[1]:
             dict_digits[loc_y] = i
     height = ""
-    prev_x = -float("inf")
-    for x, key in sorted(dict_digits.items()):
-        if x - prev_x >= 5:
+    prev_loc_x = -float("inf")
+    for loc_x, key in sorted(dict_digits.items()):
+        if loc_x - prev_loc_x >= 5:
             if key == "dot":
                 height += "."
             else:
                 height += str(key)
-        prev_x = x
+        prev_loc_x = loc_x
     if height:
         height = float(height)
     else:
@@ -98,8 +100,8 @@ def get_animal_count(img_bgr: np.ndarray, mag=1.0) -> int | None:
     dict_digits = {}
     for i in range(10):
         template = cv2.imread(f"src/count{i}_shadow.png", 0)
-        h, w = template.shape
-        template = cv2.resize(template, (int(w*mag), int(h*mag)))
+        height, width = template.shape
+        template = cv2.resize(template, (int(width*mag), int(height*mag)))
         res = cv2.matchTemplate(
             img_shadow, template, cv2.TM_CCOEFF_NORMED)
         # print(i, res.max())
@@ -107,11 +109,11 @@ def get_animal_count(img_bgr: np.ndarray, mag=1.0) -> int | None:
         for loc_y in loc[1]:
             dict_digits[loc_y] = i
     animal_num = ""
-    prev_x = -float("inf")
-    for x, key in sorted(dict_digits.items()):
-        if x - prev_x >= 5:
+    prev_loc_x = -float("inf")
+    for loc_x, key in sorted(dict_digits.items()):
+        if loc_x - prev_loc_x >= 5:
             animal_num += str(key)
-        prev_x = x
+        prev_loc_x = loc_x
     if animal_num:
         animal_num = int(animal_num)
     else:
@@ -141,74 +143,64 @@ def is_off_x8(img_gray, mag=1.0):
     x8の停止を検知
     """
     template = cv2.imread("src/x8_start.png", 0)
-    h, w = template.shape
-    template = cv2.resize(template, (int(w*mag), int(h*mag)))
+    height, witdh = template.shape
+    template = cv2.resize(template, (int(witdh*mag), int(height*mag)))
     res = cv2.matchTemplate(
         img_gray, template, cv2.TM_CCOEFF_NORMED)
     # print(res.max())
     return res.max() >= TEMPLATE_MATCHING_THRESHOLD
 
 
-class AnimalTower(gym.Env):
-    """
-    Small base for the Animal Tower, action is 12 turns gym environment
-    """
-
-    def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff, x8_enabled=True):
-        sleep(rd.random() * 10)
+class AnimalTowerDevice():
+    __init__(self):
+        # uuidを選択
+        print("Selecting a device...", end=" ", flush=True)
         if os.path.exists("idx.pickle"):
-            with open("idx.pickle", "rb") as f:
-                i = pickle.load(f)
+            with open("idx.pickle", "rb") as pickle_f:
+                i = pickle.load(pickle_f)
         else:
             i = 0
-        my_udid = udid_list[i]
-        with open("idx.pickle", "wb") as f:
-            pickle.dump((i + 1) % len(udid_list), f)
-        self.SCREENSHOT_PATH = f"./screenshot_{my_udid}.png"
-        print("Initializing...", end=" ", flush=True)
-        print(my_udid)
-        r = [0, 6]
-        m = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
-        self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
-        # 出力サイズを変更し忘れていた!!
-        self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
-        self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
-        self.reward_range = [0.0, 1.0]
+        self.udid = udid_list[i]
+        with open("idx.pickle", "wb") as pickle_f:
+            pickle.dump((i + 1) % len(udid_list), pickle_f)
+        print(f"Done [{my_udid}]")
+
+        # 数秒待機
+        sleep(rd.random() * 10)
+
+        print("Connecting to device...", end=" ", flush=True)
         caps = {
-            "platformName": "android",
-            "appium:udid": my_udid,
-            "appium:ensureWebviewHavePages": True,
-            "appium:nativeWebScreenshot": True,
-            "appium:newCommandTimeout": 3600,
-            "appium:connectHardwareKeyboard": True
+                "platformName": "android",
+                "appium:udid": my_udid,
+                "appium:ensureWebviewHavePages": True,
+                "appium:nativeWebScreenshot": True,
+                "appium:newCommandTimeout": 3600,
+                "appium:connectHardwareKeyboard": True
         }
-        print(f"http://localhost:4723/wd/hub")
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
+        print(f"Done [localhost:4723/wd/hub: {my_udid}]")
 
-        # 解像度チェッカー
-        self.driver.save_screenshot(SCREENSHOT_PATH)
-        img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+        print("Checking resolution...", end=" ", flush=True)
+        self.screenshot_path = f"./screenshot_{my_udid}.png"
+        self.driver.save_screenshot(self.screenshot_path)
+        img_bgr = cv2.imread(self.screenshot_path, 1)
         self.height_mag = img_bgr.shape[0] / 1920
         self.width_mag = img_bgr.shape[1] / 1080
+        print(f"Done [{img_bgr.shape}]")
 
-        self.move_tap_height = 800 * self.height_mag
+        self.operations = AnimalTowerDeviceOperations(device)
 
-        print(self.height_mag, self.width_mag, self.move_tap_height)
 
-        self.operations = ActionChains(self.driver)
+class AnimalTowerDeviceOperations():
+    __init__(self, device, x8_enabled=True):
+        self.operations = ActionChains(device.driver)
         self.operations.w3c_actions = ActionBuilder(
-            self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
-        self.log_path = log_path
-        self.total_step_count = 0
-        self.episode_count = 0
-        self.log_episode_max = log_episode_max
-
+        device.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
+        device.move_tap_height = 800 * self.height_mag
         # そもそもx8が使えない
-        if my_udid == "482707805697":
-            x8_enabled = False
-
+        if device.my_udid == "482707805697":
+            self.x8_enabled = False
         # x8が有効かどうかでタップ間隔を変える
         if x8_enabled:
             self.tap_intarval = 0.05
@@ -218,22 +210,46 @@ class AnimalTower(gym.Env):
             self.tap_intarval = 0.2
             self.retry_intarval = 2
             self.pooling_intarval = 0.4
+    
+
+
+class AnimalTower(gym.Env):
+    """
+    Small base for the Animal Tower, action is 12 turns gym environment
+    """
+
+    def __init__(self):
+        rotate = [0, 6]
+        move = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
+        self.actions = np.array(list(itertools.product(rotate, move)))
+
+        self.action_space = gym.spaces.Discrete(self.actions.shape[0])
+        self.observation_space = gym.spaces.Box(
+            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
+        self.reward_range = [0.0, 1.0]
+
+        self.prev_height = None
+        self.prev_animal_count = None
+
+        self.device = AnimalTowerDevice()
+        
+        self.total_step_count = 0
+        self.episode_count = 0
 
         # ヘッダのみ書き込み
-        with open(self.log_path, "w") as f:
-            print(f"animals,height", file=f)
-
-        print("Done")
-        print("-"*NUM_OF_DELIMITERS)
+        print("Logging is starting...", end=" ", flush=True)
+        with open(LOG_PATH, "w", encoding="utf-8") as f:
+            print("animals,height", file=f)
+        print("Done []")
 
         # 時間計測用
-        self.t0 = time()
+        self.t_0 = time()
 
     def reset(self) -> np.ndarray:
         """
         リセット
         """
-        print(f"episode({self.episode_count + 1})")
+        print(f"Episode({self.episode_count + 1})")
         print("Resetting...", end=" ", flush=True)
         self.prev_height = None
         self.prev_animal_count = None
@@ -242,8 +258,8 @@ class AnimalTower(gym.Env):
             # リトライボタンをタップして3秒待つ
             self._tap(COORDINATES_RETRY)
             sleep(self.retry_intarval)
-            self.driver.save_screenshot(SCREENSHOT_PATH)
-            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+            self.driver.save_screenshot(self.screenshot_path)
+            img_bgr = cv2.imread(self.screenshot_path, 1)
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             self.prev_height = get_height(img_gray, mag=self.height_mag)
@@ -251,22 +267,21 @@ class AnimalTower(gym.Env):
                 img_bgr, mag=self.height_mag)
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
             # デバッグ
-            print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
+            # print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
         print("Done")
-        t1 = time()
-        print(f"リセット所要時間: {t1 - self.t0:4.2f}秒")
-        self.t0 = t1
+        t_1 = time()
+        print(f"リセット所要時間: {t_1 - self.t_0:4.2f}秒")
+        self.t_0 = t_1
         return obs
 
-    def step(self, action_index) -> tuple[np.ndarray, float, bool, dict]:
+    def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
         """
         1アクション
         """
         print(f"step({self.total_step_count + 1})")
-        action = self.ACTION_MAP[action_index]
-        # 何番目のactionか出力
+        action = self.actions[action]
         print(
-            f"Action({action_index}/{self.ACTION_MAP.shape[0]-1}), {action[0], action[1]}")
+            f"Action({action[0]}/{self.actions.shape[0]-1}), {action[0], action[1]}")
         # 回転と移動
         self._rotate_and_move(action)
         sleep(0.7)
@@ -274,9 +289,9 @@ class AnimalTower(gym.Env):
         done = False
         reward = 0.0
         while True:
-            self.driver.save_screenshot(self.SCREENSHOT_PATH)
-            img_bgr = cv2.imread(self.SCREENSHOT_PATH, 1)
-            if img_bgr is None:
+            self.driver.save_screenshot(self.screenshot_path)
+            img_bgr = cv2.imread(self.screenshot_path, 1)
+            if type(img_bgr) is not np.ndarray:
                 continue
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
@@ -293,16 +308,17 @@ class AnimalTower(gym.Env):
             height = get_height(img_gray, mag=self.height_mag)
             animal_count = get_animal_count(img_bgr, mag=self.width_mag)
             print(
-                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
+                f"動物数: {self.prev_animal_count} -> {animal_count}, \
+                高さ: {self.prev_height} -> {height}")
             # 終端
             if is_result_screen(img_gray, mag=self.height_mag):
                 print("Game over")
                 done = True
                 # ログファイルに書き出し
-                with open(self.log_path, "a") as f:
+                with open(self.LOG_PATH, "a") as f:
                     print(f"{self.prev_animal_count},{self.prev_height}", file=f)
                 self.episode_count += 1
-                assert self.episode_count < self.log_episode_max, f"エピソード{self.log_episode_max}到達"
+                assert self.episode_count < LOG_EPISODE_MAX, f"エピソード{LOG_EPISODE_MAX}到達"
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
@@ -325,12 +341,15 @@ class AnimalTower(gym.Env):
         self.total_step_count += 1
         # 共通処理
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-        t1 = time()
-        print(f"ステップ所要時間: {t1 - self.t0:4.2f}秒")
-        self.t0 = t1
+        t_1 = time()
+        print(f"ステップ所要時間: {t_1 - self.t_0:4.2f}秒")
+        self.t_0 = t_1
         print(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
         return obs, reward, done, {}
+
+    def render(self):
+        pass
 
     def _tap(self, coordinates: tuple) -> None:
         """
