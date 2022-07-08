@@ -39,7 +39,8 @@ global_idx = 0
 # udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
 
 # 園田, Android5
-udid_list = ["CB512C5QDQ", "482707805697"]
+# udid_list = ["CB512C5QDQ", "482707805697"]
+udid_list = ["353010080451240", "CB512C5QDQ"]
 
 
 def is_result_screen(img_gray: np.ndarray, mag=1.0) -> bool:
@@ -135,11 +136,13 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
 
 
-def is_off_x8(img_gray):
+def is_off_x8(img_gray, mag=1.0):
     """
     x8の停止を検知
     """
     template = cv2.imread("src/x8_start.png", 0)
+    h, w = template.shape
+    template = cv2.resize(template, (int(w*mag), int(h*mag)))
     res = cv2.matchTemplate(
         img_gray, template, cv2.TM_CCOEFF_NORMED)
     # print(res.max())
@@ -192,7 +195,7 @@ class AnimalTower(gym.Env):
 
         self.move_tap_height = 800 * self.height_mag
 
-        # print(self.height_mag, self.width_mag, self.move_tap_height)
+        print(self.height_mag, self.width_mag, self.move_tap_height)
 
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
@@ -276,7 +279,7 @@ class AnimalTower(gym.Env):
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             # x8 speederが無効化された場合
-            if is_off_x8(img_gray):
+            if is_off_x8(img_gray, mag=self.height_mag):
                 print("x8 speederを適用")
                 self._tap((1032, 1857))
                 sleep(0.5)
@@ -357,7 +360,7 @@ class AnimalTower(gym.Env):
                     self.tap_intarval)
             # 重要
             self.operations.w3c_actions.perform()
-        print(a[1] * self.width_mag, self.move_tap_height)
+        # print(a[1] * self.width_mag, self.move_tap_height)
         # 座標タップ
         self.operations.w3c_actions.pointer_action.move_to_location(
             a[1] * self.width_mag, self.move_tap_height)

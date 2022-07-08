@@ -37,7 +37,7 @@ trainer = dqn.R2D2Trainer(env="my_env", config={
         "lstm_cell_size": 256,  # 256
         "max_seq_len": 20  # 20
     },
-    # "disable_env_checking": True
+    "disable_env_checking": True
 })
 
 
