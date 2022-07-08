@@ -71,7 +71,8 @@ class AnimalTower(gym.Env):
         # with open("idx.pickle", "wb") as pickle_f:
         #     pickle.dump((i + 1) % len(udid_list), pickle_f)
         # udid = "790908812299"
-        udid = "CB512C5QDQ"
+        # udid = "CB512C5QDQ"
+        udid = "482707805697"
         sleep(rd.random() * 10)
         print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
         self.device = AnimalTowerDevice(udid)

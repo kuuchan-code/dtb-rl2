@@ -16,12 +16,7 @@ name_prefix = "_dqn_cnn_r4m11b_bin"
 now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 
 # udidは適宜変更
-env = AnimalTower(
-    # udid="482707805697",
-    udid="CB512C5QDQ",
-    log_path=f"log/{name_prefix}_{now_str}.csv",
-    x8_enabled=True
-)
+env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv")
 
 # model = A2C(policy="CnnPolicy", env=env,
 #             verbose=2, tensorboard_log="tensorboard", learning_rate=0.0007)
