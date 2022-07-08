@@ -23,6 +23,7 @@ print(dqn.R2D2_DEFAULT_CONFIG)
 trainer = dqn.R2D2Trainer(env="my_env", config={
     "framework": "tf",
     # R2D2 settings.
+    "num_workers": 3,
     "compress_observations": True,
     "exploration_config": {
         "epsilon_timesteps": 40  # 10000
