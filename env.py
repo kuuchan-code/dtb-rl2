@@ -109,8 +109,9 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     # return resized_and_cropped_img_bin
 
     # 大きい盤面
+
     return cv2.bitwise_not(cv2.inRange(
-        cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
+        cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))/255
 
 
 def is_off_x8(img_gray):
@@ -150,7 +151,7 @@ class AnimalTower(gym.Env):
         # 出力サイズを変更し忘れていた!!
         self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
         self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
+            low=0.0, high=1.0, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
         caps = {
             "platformName": "android",
@@ -160,9 +161,9 @@ class AnimalTower(gym.Env):
             "appium:newCommandTimeout": 3600,
             "appium:connectHardwareKeyboard": True
         }
-        print(f"http://localhost_main:{appium_port}/wd/hub")
+        print(f"http://localhost:{appium_port}/wd/hub")
         self.driver = webdriver.Remote(
-            f"http://localhost_main:{appium_port}/wd/hub", caps)
+            f"http://localhost:{appium_port}/wd/hub", caps)
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
