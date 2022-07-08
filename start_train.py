@@ -24,14 +24,14 @@ trainer = dqn.R2D2Trainer(env="my_env", config={
     "framework": "tf",
     # R2D2 settings.
     "exploration_config": {
-        "epsilon_timesteps": 30  # 10000
+        "epsilon_timesteps": 40  # 10000
     },
-    "target_network_update_freq": 9,  # 2500
+    "target_network_update_freq": 10,  # 2500
     "model":{
         "fcnet_hiddens": [256, 256],  # [256, 256]
         "use_lstm": True,  # False
         "lstm_cell_size": 256,  # 256
-        "max_seq_len": 2  # 20
+        "max_seq_len": 10  # 20
     }
 })
 
