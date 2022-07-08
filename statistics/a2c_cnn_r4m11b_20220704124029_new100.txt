@@ -1,48 +1,48 @@
 try({summary(df)})
-    animals          height     
- Min.   : 1.00   Min.   :0.840  
- 1st Qu.: 3.00   1st Qu.:2.730  
- Median : 5.00   Median :3.810  
- Mean   : 5.36   Mean   :4.009  
- 3rd Qu.: 7.00   3rd Qu.:4.995  
- Max.   :12.00   Max.   :7.770  
+    animals          height      
+ Min.   : 1.00   Min.   : 1.020  
+ 1st Qu.: 4.00   1st Qu.: 2.955  
+ Median : 5.00   Median : 3.900  
+ Mean   : 5.78   Mean   : 4.172  
+ 3rd Qu.: 8.00   3rd Qu.: 5.093  
+ Max.   :13.00   Max.   :11.910  
 try({t.test(df["animals"])})
 
 	One Sample t-test
 
 data:  df["animals"]
-t = 21.974, df = 99, p-value < 2.2e-16
+t = 22.607, df = 99, p-value < 2.2e-16
 alternative hypothesis: true mean is not equal to 0
 95 percent confidence interval:
- 4.876002 5.843998
+ 5.272685 6.287315
 sample estimates:
 mean of x 
-     5.36 
+     5.78 
 
 try({t.test(df["height"])})
 
 	One Sample t-test
 
 data:  df["height"]
-t = 24.73, df = 99, p-value < 2.2e-16
+t = 22.93, df = 99, p-value < 2.2e-16
 alternative hypothesis: true mean is not equal to 0
 95 percent confidence interval:
- 3.687524 4.330876
+ 3.810802 4.532798
 sample estimates:
 mean of x 
-   4.0092 
+   4.1718 
 
 try({cor.test(df[,1], df[,2])})
 
 	Pearson's product-moment correlation
 
 data:  df[, 1] and df[, 2]
-t = 17.23, df = 98, p-value < 2.2e-16
+t = 14.945, df = 98, p-value < 2.2e-16
 alternative hypothesis: true correlation is not equal to 0
 95 percent confidence interval:
- 0.8083149 0.9087250
+ 0.7620504 0.8851560
 sample estimates:
       cor 
-0.8670703 
+0.8336825 
 
 
