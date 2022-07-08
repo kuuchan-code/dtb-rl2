@@ -23,6 +23,7 @@ print(dqn.R2D2_DEFAULT_CONFIG)
 trainer = dqn.R2D2Trainer(env="my_env", config={
     "framework": "tf",
     # R2D2 settings.
+    "compress_observations": True,
     "exploration_config": {
         "epsilon_timesteps": 40  # 10000
     },
@@ -31,7 +32,7 @@ trainer = dqn.R2D2Trainer(env="my_env", config={
         "fcnet_hiddens": [256, 256],  # [256, 256]
         "use_lstm": True,  # False
         "lstm_cell_size": 256,  # 256
-        "max_seq_len": 5  # 20
+        "max_seq_len": 20  # 20
     }
 })
 
