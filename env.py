@@ -144,9 +144,15 @@ class AnimalTower(gym.Env):
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
 
+        # 解像度チェッカー
         self.driver.save_screenshot(SCREENSHOT_PATH)
         img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
-        print(img_bgr.shape)
+        self.height_mag = img_bgr.shape[0] / 1920
+        self.width_mag = img_bgr.shape[1] / 1080
+
+        self.move_tap_height = 800 * self.height_mag
+
+        print(self.height_mag, self.width_mag, self.move_tap_height)
 
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
@@ -284,8 +290,11 @@ class AnimalTower(gym.Env):
         """
         Tap
         """
+        x = coordinates[0] * self.width_mag
+        y = coordinates[1] * self.height_mag
+        print(x, y)
         self.operations.w3c_actions.pointer_action.move_to_location(
-            *coordinates)
+            x, y)
         self.operations.w3c_actions.pointer_action.click()
         self.operations.perform()
 
@@ -307,9 +316,10 @@ class AnimalTower(gym.Env):
                     self.tap_intarval)
             # 重要
             self.operations.w3c_actions.perform()
+        print(a[1] * self.width_mag, self.move_tap_height)
         # 座標タップ
         self.operations.w3c_actions.pointer_action.move_to_location(
-            a[1], 800)
+            a[1] * self.width_mag, self.move_tap_height)
         self.operations.w3c_actions.pointer_action.click()
         # 適用
         self.operations.w3c_actions.perform()
