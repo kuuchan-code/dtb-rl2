@@ -85,10 +85,9 @@ class AnimalTower(gym.Env):
         self.episode_count = 0
 
         # ヘッダのみ書き込み
-        print("Logging is starting...", end=" ", flush=True)
         with open(LOG_PATH, "w", encoding="utf-8") as log_f:
             print("animals,height", file=log_f)
-        print("Done []")
+        print(f"{LOG_PATH} created or overwritten.")
 
         # 時間計測用
         self.t_0 = time()
@@ -222,8 +221,8 @@ class AnimalTowerDevice():
         udid = udid_list[i]
         with open("idx.pickle", "wb") as pickle_f:
             pickle.dump((i + 1) % len(udid_list), pickle_f)
-        print(f"Connecting to {udid}...", end=" ", flush=True)
         sleep(rd.random() * 10)
+        print(f"Connecting to {udid}...", end=" ", flush=True)
         caps = {
             "platformName": "android",
             "appium:udid": udid,
