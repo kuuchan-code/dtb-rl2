@@ -254,9 +254,9 @@ class AnimalTowerDevice():
         self.move_tap_height = 800 * self.height_mag
         # そもそもx8が使えない
         if udid == "482707805697":
-            self.x8_enabled = False
+            x8_enabled = False
         # x8が有効かどうかでタップ間隔を変える
-        if self.x8_enabled:
+        if x8_enabled:
             self.tap_intarval = 0.05
             self.retry_intarval = 0.5
             self.pooling_intarval = 0.1
@@ -264,7 +264,7 @@ class AnimalTowerDevice():
             self.tap_intarval = 0.2
             self.retry_intarval = 2
             self.pooling_intarval = 0.4
-        print(f"Done [{img_bgr.shape}, {self.x8_enabled}(x8)]")
+        print(f"Done [{img_bgr.shape}, {x8_enabled}(x8)]")
 
         self.img_gray = None
         self.img_bgr = None
