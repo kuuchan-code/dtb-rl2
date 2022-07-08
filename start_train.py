@@ -15,11 +15,12 @@ import json
 name_prefix = "_dqn_cnn_r4m11b_bin"
 now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 
-# udidはAndroid5の白いやつ
+# udidは適宜変更
 env = AnimalTower(
-    udid="482707805697",
+    # udid="482707805697",
+    udid="CB512C5QDQ",
     log_path=f"log/{name_prefix}_{now_str}.csv",
-    x8_enabled=False
+    x8_enabled=True
 )
 
 # model = A2C(policy="CnnPolicy", env=env,
