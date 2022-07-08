@@ -28,9 +28,9 @@ trainer = dqn.R2D2Trainer(env="my_env", config={
     },
     "target_network_update_freq": 9,  # 2500
     "model":{
-        "fcnet_hiddens": [64, 64],  # [256, 256]
+        "fcnet_hiddens": [256, 256],  # [256, 256]
         "use_lstm": True,  # False
-        "lstm_cell_size": 64,  # 256
+        "lstm_cell_size": 256,  # 256
         "max_seq_len": 2  # 20
     }
 })
