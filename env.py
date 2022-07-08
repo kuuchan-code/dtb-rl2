@@ -16,7 +16,6 @@ from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.actions.pointer_input import PointerInput
 from selenium.webdriver.common.actions import interaction
 
-
 SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
 TEMPLATE_MATCHING_THRESHOLD = 0.95
@@ -45,82 +44,6 @@ udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
 # udid_list = ["353010080451240", "CB512C5QDQ"]
 
 
-def is_result_screen(img_gray: np.ndarray, mag=1.0) -> bool:
-    """
-    Check the back button to determine game end.
-    """
-    template = cv2.imread("src/back.png", 0)
-    height, width = template.shape
-    template = cv2.resize(template, (int(width*mag), int(height*mag)))
-    res = cv2.matchTemplate(
-        img_gray, template, cv2.TM_CCOEFF_NORMED)
-    # print("バックボタン一致率", res.max())
-    return res.max() >= TEMPLATE_MATCHING_THRESHOLD
-
-
-def get_height(img_gray: np.ndarray, mag=1.0) -> float | None:
-    """
-    Get height
-    """
-    img_gray_height = img_gray[int(60*mag):int(130*mag), :]
-    dict_digits = {}
-    for i in list(range(10))+["dot"]:
-        template = cv2.imread(f"src/height{i}.png", 0)
-        height, width = template.shape
-        template = cv2.resize(template, (int(width*mag), int(height*mag)))
-        res = cv2.matchTemplate(
-            img_gray_height, template, cv2.TM_CCOEFF_NORMED)
-        loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
-        # print(loc)
-        for loc_y in loc[1]:
-            dict_digits[loc_y] = i
-    height = ""
-    prev_loc_x = -float("inf")
-    for loc_x, key in sorted(dict_digits.items()):
-        if loc_x - prev_loc_x >= 5:
-            if key == "dot":
-                height += "."
-            else:
-                height += str(key)
-        prev_loc_x = loc_x
-    if height:
-        height = float(height)
-    else:
-        height = None
-    return height
-
-
-def get_animal_count(img_bgr: np.ndarray, mag=1.0) -> int | None:
-    """
-    動物の数を取得
-    引数にはカラー画像を与える!!
-    """
-    img_shadow = cv2.inRange(
-        img_bgr[int(264*mag):int(328*mag)], BACKGROUND_COLOR_DARK, WHITE)
-    dict_digits = {}
-    for i in range(10):
-        template = cv2.imread(f"src/count{i}_shadow.png", 0)
-        height, width = template.shape
-        template = cv2.resize(template, (int(width*mag), int(height*mag)))
-        res = cv2.matchTemplate(
-            img_shadow, template, cv2.TM_CCOEFF_NORMED)
-        # print(i, res.max())
-        loc = np.where(res >= ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD)
-        for loc_y in loc[1]:
-            dict_digits[loc_y] = i
-    animal_num = ""
-    prev_loc_x = -float("inf")
-    for loc_x, key in sorted(dict_digits.items()):
-        if loc_x - prev_loc_x >= 5:
-            animal_num += str(key)
-        prev_loc_x = loc_x
-    if animal_num:
-        animal_num = int(animal_num)
-    else:
-        animal_num = None
-    return animal_num
-
-
 def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     """
     入力BGR画像を訓練用画像にする
@@ -136,81 +59,6 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
 
     return cv2.bitwise_not(cv2.inRange(
         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
-
-
-def is_off_x8(img_gray, mag=1.0):
-    """
-    x8の停止を検知
-    """
-    template = cv2.imread("src/x8_start.png", 0)
-    height, witdh = template.shape
-    template = cv2.resize(template, (int(witdh*mag), int(height*mag)))
-    res = cv2.matchTemplate(
-        img_gray, template, cv2.TM_CCOEFF_NORMED)
-    # print(res.max())
-    return res.max() >= TEMPLATE_MATCHING_THRESHOLD
-
-
-class AnimalTowerDevice():
-    __init__(self):
-        # uuidを選択
-        print("Selecting a device...", end=" ", flush=True)
-        if os.path.exists("idx.pickle"):
-            with open("idx.pickle", "rb") as pickle_f:
-                i = pickle.load(pickle_f)
-        else:
-            i = 0
-        self.udid = udid_list[i]
-        with open("idx.pickle", "wb") as pickle_f:
-            pickle.dump((i + 1) % len(udid_list), pickle_f)
-        print(f"Done [{my_udid}]")
-
-        # 数秒待機
-        sleep(rd.random() * 10)
-
-        print("Connecting to device...", end=" ", flush=True)
-        caps = {
-                "platformName": "android",
-                "appium:udid": my_udid,
-                "appium:ensureWebviewHavePages": True,
-                "appium:nativeWebScreenshot": True,
-                "appium:newCommandTimeout": 3600,
-                "appium:connectHardwareKeyboard": True
-        }
-        self.driver = webdriver.Remote(
-            "http://localhost:4723/wd/hub", caps)
-        print(f"Done [localhost:4723/wd/hub: {my_udid}]")
-
-        print("Checking resolution...", end=" ", flush=True)
-        self.screenshot_path = f"./screenshot_{my_udid}.png"
-        self.driver.save_screenshot(self.screenshot_path)
-        img_bgr = cv2.imread(self.screenshot_path, 1)
-        self.height_mag = img_bgr.shape[0] / 1920
-        self.width_mag = img_bgr.shape[1] / 1080
-        print(f"Done [{img_bgr.shape}]")
-
-        self.operations = AnimalTowerDeviceOperations(device)
-
-
-class AnimalTowerDeviceOperations():
-    __init__(self, device, x8_enabled=True):
-        self.operations = ActionChains(device.driver)
-        self.operations.w3c_actions = ActionBuilder(
-        device.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
-        device.move_tap_height = 800 * self.height_mag
-        # そもそもx8が使えない
-        if device.my_udid == "482707805697":
-            self.x8_enabled = False
-        # x8が有効かどうかでタップ間隔を変える
-        if x8_enabled:
-            self.tap_intarval = 0.05
-            self.retry_intarval = 0.5
-            self.pooling_intarval = 0.1
-        else:
-            self.tap_intarval = 0.2
-            self.retry_intarval = 2
-            self.pooling_intarval = 0.4
-    
 
 
 class AnimalTower(gym.Env):
@@ -232,14 +80,14 @@ class AnimalTower(gym.Env):
         self.prev_animal_count = None
 
         self.device = AnimalTowerDevice()
-        
+
         self.total_step_count = 0
         self.episode_count = 0
 
         # ヘッダのみ書き込み
         print("Logging is starting...", end=" ", flush=True)
-        with open(LOG_PATH, "w", encoding="utf-8") as f:
-            print("animals,height", file=f)
+        with open(LOG_PATH, "w", encoding="utf-8") as log_f:
+            print("animals,height", file=log_f)
         print("Done []")
 
         # 時間計測用
@@ -256,15 +104,16 @@ class AnimalTower(gym.Env):
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
         while self.prev_height is None or self.prev_animal_count is None:
             # リトライボタンをタップして3秒待つ
-            self._tap(COORDINATES_RETRY)
-            sleep(self.retry_intarval)
-            self.driver.save_screenshot(self.screenshot_path)
-            img_bgr = cv2.imread(self.screenshot_path, 1)
+            self.device.tap(COORDINATES_RETRY)
+            sleep(self.device.retry_intarval)
+            self.device.driver.save_screenshot(self.device.screenshot_path)
+            img_bgr = cv2.imread(self.device.screenshot_path, 1)
             obs = to_training_image(img_bgr)
-            img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
-            self.prev_height = get_height(img_gray, mag=self.height_mag)
-            self.prev_animal_count = get_animal_count(
-                img_bgr, mag=self.height_mag)
+            self.device.img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            self.prev_height = self.device.get_height(
+                mag=self.device.height_mag)
+            self.prev_animal_count = self.device.get_animal_count(
+                mag=self.device.height_mag)
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
             # デバッグ
             # print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
@@ -283,47 +132,53 @@ class AnimalTower(gym.Env):
         print(
             f"Action({action[0]}/{self.actions.shape[0]-1}), {action[0], action[1]}")
         # 回転と移動
-        self._rotate_and_move(action)
+        self.device.rotate_and_move(action)
         sleep(0.7)
         # 変数の初期化
         done = False
         reward = 0.0
         while True:
-            self.driver.save_screenshot(self.screenshot_path)
-            img_bgr = cv2.imread(self.screenshot_path, 1)
-            if type(img_bgr) is not np.ndarray:
+            self.device.driver.save_screenshot(self.device.screenshot_path)
+            self.device.img_bgr = cv2.imread(self.device.screenshot_path, 1)
+            try:
+                obs = to_training_image(self.device.img_bgr)
+            except Exception as inst:
+                print(type(inst))
+                print(inst.args)
+                print(inst)
                 continue
-            obs = to_training_image(img_bgr)
-            img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
+            self.device.img_gray = cv2.cvtColor(
+                self.device.img_bgr, cv2.COLOR_BGR2GRAY)
             # x8 speederが無効化された場合
-            if is_off_x8(img_gray, mag=self.height_mag):
+            if self.device.is_off_x8(mag=self.device.height_mag):
                 print("x8 speederを適用")
-                self._tap((1032, 1857))
+                self.device.tap((1032, 1857))
                 sleep(0.5)
-                self._tap((726, 1171))
+                self.device.tap((726, 1171))
                 sleep(5)
                 # 画像は再読込
                 continue
             # ループで必ず高さと動物数を取得
-            height = get_height(img_gray, mag=self.height_mag)
-            animal_count = get_animal_count(img_bgr, mag=self.width_mag)
+            height = self.device.get_height(mag=self.device.height_mag)
+            animal_count = self.device.get_animal_count(
+                mag=self.device.width_mag)
             print(
                 f"動物数: {self.prev_animal_count} -> {animal_count}, \
                 高さ: {self.prev_height} -> {height}")
             # 終端
-            if is_result_screen(img_gray, mag=self.height_mag):
+            if self.device.is_result_screen(mag=self.device.height_mag):
                 print("Game over")
                 done = True
                 # ログファイルに書き出し
-                with open(self.LOG_PATH, "a") as f:
-                    print(f"{self.prev_animal_count},{self.prev_height}", file=f)
+                with open(LOG_PATH, "a", encoding="utf-8") as log_f:
+                    print(
+                        f"{self.prev_animal_count},{self.prev_height}", file=log_f)
                 self.episode_count += 1
                 assert self.episode_count < LOG_EPISODE_MAX, f"エピソード{LOG_EPISODE_MAX}到達"
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
                 print("結果画面遷移中")
-                pass
             # 高さ更新を検知
             elif height > self.prev_height:
                 print(f"Height update: {height}m")
@@ -334,7 +189,7 @@ class AnimalTower(gym.Env):
                 print("No height update")
                 reward = 1.0
                 break
-            sleep(self.pooling_intarval)
+            sleep(self.device.pooling_intarval)
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
@@ -348,43 +203,191 @@ class AnimalTower(gym.Env):
         print("-"*NUM_OF_DELIMITERS)
         return obs, reward, done, {}
 
-    def render(self):
+    def render(self, mode=None):
         pass
 
-    def _tap(self, coordinates: tuple) -> None:
+
+class AnimalTowerDevice():
+    """
+    どうぶつタワーが起動してるデバイスに関するクラス
+    """
+
+    def __init__(self, x8_enabled=True):
+        # udidを選択
+        print("Selecting a device...", end=" ", flush=True)
+        if os.path.exists("idx.pickle"):
+            with open("idx.pickle", "rb") as pickle_f:
+                i = pickle.load(pickle_f)
+        else:
+            i = 0
+        udid = udid_list[i]
+        with open("idx.pickle", "wb") as pickle_f:
+            pickle.dump((i + 1) % len(udid_list), pickle_f)
+        print(f"Done [{udid}]")
+
+        # 数秒待機
+        sleep(rd.random() * 10)
+
+        print("Connecting to device...", end=" ", flush=True)
+        caps = {
+            "platformName": "android",
+            "appium:udid": udid,
+            "appium:ensureWebviewHavePages": True,
+            "appium:nativeWebScreenshot": True,
+            "appium:newCommandTimeout": 3600,
+            "appium:connectHardwareKeyboard": True
+        }
+        self.driver = webdriver.Remote(
+            "http://localhost:4723/wd/hub", caps)
+        print(f"Done [localhost:4723/wd/hub: {udid}]")
+
+        print("Checking device...", end=" ", flush=True)
+        self.screenshot_path = f"./screenshot_{udid}.png"
+        self.driver.save_screenshot(self.screenshot_path)
+        img_bgr = cv2.imread(self.screenshot_path, 1)
+        self.mag = img_bgr.shape[0] / 1920, img_bgr.shape[1] / 1080
+        self.actions = ActionChains(self.driver)
+        self.actions.w3c_actions = ActionBuilder(
+            self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
+        self.height_mag = img_bgr.shape[0] / 1920
+        self.width_mag = img_bgr.shape[1] / 1080
+        self.move_tap_height = 800 * self.height_mag
+        # そもそもx8が使えない
+        if udid == "482707805697":
+            self.x8_enabled = False
+        # x8が有効かどうかでタップ間隔を変える
+        if self.x8_enabled:
+            self.tap_intarval = 0.05
+            self.retry_intarval = 0.5
+            self.pooling_intarval = 0.1
+        else:
+            self.tap_intarval = 0.2
+            self.retry_intarval = 2
+            self.pooling_intarval = 0.4
+        print(f"Done [{img_bgr.shape}, {x8_enabled}(x8)]")
+
+        self.img_gray = None
+        self.img_bgr = None
+
+    def is_off_x8(self, mag=1.0):
+        """
+        x8の停止を検知
+        """
+        template = cv2.imread("src/x8_start.png", 0)
+        height, witdh = template.shape
+        template = cv2.resize(template, (int(witdh*mag), int(height*mag)))
+        res = cv2.matchTemplate(
+            self.img_gray, template, cv2.TM_CCOEFF_NORMED)
+        # print(res.max())
+        return res.max() >= TEMPLATE_MATCHING_THRESHOLD
+
+    def is_result_screen(self: np.ndarray, mag=1.0) -> bool:
+        """
+        Check the back button to determine game end.
+        """
+        template = cv2.imread("src/back.png", 0)
+        height, width = template.shape
+        template = cv2.resize(template, (int(width*mag), int(height*mag)))
+        res = cv2.matchTemplate(
+            self.img_gray, template, cv2.TM_CCOEFF_NORMED)
+        # print("バックボタン一致率", res.max())
+        return res.max() >= TEMPLATE_MATCHING_THRESHOLD
+
+    def get_height(self, mag=1.0) -> float | None:
+        """
+        Get height
+        """
+        img_gray_height = self.img_gray[int(60*mag):int(130*mag), :]
+        dict_digits = {}
+        for i in list(range(10))+["dot"]:
+            template = cv2.imread(f"src/height{i}.png", 0)
+            height, width = template.shape
+            template = cv2.resize(template, (int(width*mag), int(height*mag)))
+            res = cv2.matchTemplate(
+                img_gray_height, template, cv2.TM_CCOEFF_NORMED)
+            loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
+            # print(loc)
+            for loc_y in loc[1]:
+                dict_digits[loc_y] = i
+        height = ""
+        prev_loc_x = -float("inf")
+        for loc_x, key in sorted(dict_digits.items()):
+            if loc_x - prev_loc_x >= 5:
+                if key == "dot":
+                    height += "."
+                else:
+                    height += str(key)
+            prev_loc_x = loc_x
+        if height:
+            height = float(height)
+        else:
+            height = None
+        return height
+
+    def get_animal_count(self, mag=1.0) -> int | None:
+        """
+        動物の数を取得
+        引数にはカラー画像を与える!!
+        """
+        img_shadow = cv2.inRange(
+            self.img_bgr[int(264*mag):int(328*mag)], BACKGROUND_COLOR_DARK, WHITE)
+        dict_digits = {}
+        for i in range(10):
+            template = cv2.imread(f"src/count{i}_shadow.png", 0)
+            height, width = template.shape
+            template = cv2.resize(template, (int(width*mag), int(height*mag)))
+            res = cv2.matchTemplate(
+                img_shadow, template, cv2.TM_CCOEFF_NORMED)
+            # print(i, res.max())
+            loc = np.where(res >= ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD)
+            for loc_y in loc[1]:
+                dict_digits[loc_y] = i
+        animal_num = ""
+        prev_loc_x = -float("inf")
+        for loc_x, key in sorted(dict_digits.items()):
+            if loc_x - prev_loc_x >= 5:
+                animal_num += str(key)
+            prev_loc_x = loc_x
+        if animal_num:
+            animal_num = int(animal_num)
+        else:
+            animal_num = None
+        return animal_num
+
+    def tap(self, coordinates: tuple) -> None:
         """
         Tap
         """
-        x = coordinates[0] * self.width_mag
-        y = coordinates[1] * self.height_mag
+        loc_x = coordinates[0] * self.width_mag
+        loc_y = coordinates[1] * self.height_mag
         # print(x, y)
-        self.operations.w3c_actions.pointer_action.move_to_location(
-            x, y)
-        self.operations.w3c_actions.pointer_action.click()
-        self.operations.perform()
+        self.actions.w3c_actions.pointer_action.move_to_location(
+            loc_x, loc_y)
+        self.actions.w3c_actions.pointer_action.click()
+        self.actions.perform()
 
-    def _rotate_and_move(self, a: np.ndarray) -> None:
+    def rotate_and_move(self, action: np.ndarray) -> None:
         """
         高速化のために回転と移動を同時に操作
         移動の前にperformをしないとバグる
         """
         # 回転タップ
         # 0回転は処理を短縮
-        if a[0] > 0:
-            self.operations.w3c_actions.pointer_action.move_to_location(
+        if action[0] > 0:
+            self.actions.w3c_actions.pointer_action.move_to_location(
                 500 * self.width_mag, 1800 * self.height_mag)
-            for _ in range(a[0]):
-                self.operations.w3c_actions.pointer_action.click()
+            for _ in range(action[0]):
+                self.actions.w3c_actions.pointer_action.click()
                 # 試した感じ0.05がバグらない最低値
                 # x8なしはわからない
-                self.operations.w3c_actions.pointer_action.pause(
+                self.actions.w3c_actions.pointer_action.pause(
                     self.tap_intarval)
             # 重要
-            self.operations.w3c_actions.perform()
+            self.actions.w3c_actions.perform()
         # print(a[1] * self.width_mag, self.move_tap_height)
         # 座標タップ
-        self.operations.w3c_actions.pointer_action.move_to_location(
-            a[1] * self.width_mag, self.move_tap_height)
-        self.operations.w3c_actions.pointer_action.click()
+        self.actions.w3c_actions.pointer_action.move_to_location(
+            action[1] * self.width_mag, self.move_tap_height)
+        self.actions.w3c_actions.pointer_action.click()
         # 適用
-        self.operations.w3c_actions.perform()
+        self.actions.w3c_actions.perform()
