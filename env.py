@@ -33,7 +33,6 @@ BLACK = np.zeros(3, dtype=np.uint8)
 WHITE = BLACK + 255
 WHITE_DARK = WHITE - 15
 
-global_idx = 0
 
 # あさひくんの、私の、園田さん("CB512C5QDQ")の、
 udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
@@ -75,6 +74,7 @@ def get_height(img_gray: np.ndarray, mag=1.0) -> float | None:
     height = ""
     prev_x = -float("inf")
     for x, key in sorted(dict_digits.items()):
+        # ダブり排除
         if x - prev_x >= 5:
             if key == "dot":
                 height += "."
@@ -109,6 +109,7 @@ def get_animal_count(img_bgr: np.ndarray, mag=1.0) -> int | None:
     animal_num = ""
     prev_x = -float("inf")
     for x, key in sorted(dict_digits.items()):
+        # ダブり排除
         if x - prev_x >= 5:
             animal_num += str(key)
         prev_x = x
@@ -154,36 +155,27 @@ class AnimalTower(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff, x8_enabled=True):
-        sleep(rd.random() * 10)
-        if os.path.exists("idx.pickle"):
-            with open("idx.pickle", "rb") as f:
-                i = pickle.load(f)
-        else:
-            i = 0
-        my_udid = udid_list[i]
-        with open("idx.pickle", "wb") as f:
-            pickle.dump((i + 1) % len(udid_list), f)
-        self.SCREENSHOT_PATH = f"./screenshot_{my_udid}.png"
+    def __init__(self, udid=None, log_path="train.csv", log_episode_max=0x7fffffff, x8_enabled=True):
         print("Initializing...", end=" ", flush=True)
-        print(my_udid)
-        r = [0, 6]
+        r = [0, 4, 6, 8]
+        # 丸め込みを考慮して +0.5
         m = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
         self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
         # 出力サイズを変更し忘れていた!!
         self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
         self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
+            low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
+        self.SCREENSHOT_PATH = f"./screenshot_{udid}.png"
         caps = {
             "platformName": "android",
-            "appium:udid": my_udid,
             "appium:ensureWebviewHavePages": True,
             "appium:nativeWebScreenshot": True,
             "appium:newCommandTimeout": 3600,
             "appium:connectHardwareKeyboard": True
         }
-        print(f"http://localhost:4723/wd/hub")
+        if udid is not None:
+            caps["appium:udid"] = udid
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
 
@@ -206,8 +198,8 @@ class AnimalTower(gym.Env):
         self.episode_count = 0
         self.log_episode_max = log_episode_max
 
-        # そもそもx8が使えない
-        if my_udid == "482707805697":
+        # そもそもx8が使えない端末
+        if udid == "482707805697":
             x8_enabled = False
 
         # x8が有効かどうかでタップ間隔を変える
@@ -331,7 +323,9 @@ class AnimalTower(gym.Env):
         self.t0 = t1
         print(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
-        return obs, reward, done, {}
+        # baseline3のCnnPolicyの場合必要
+        obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
+        return obs_3d, reward, done, {}
 
     def _tap(self, coordinates: tuple) -> None:
         """

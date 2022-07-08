@@ -130,7 +130,7 @@ dmypy.json
 
 # 追加
 *.zip
-screenshot.png
 observation*.png
 train.csv
 *.pickle
+/screenshot*.png
