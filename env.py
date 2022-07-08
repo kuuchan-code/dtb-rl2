@@ -214,7 +214,7 @@ class AnimalTowerDevice():
 
     def __init__(self, x8_enabled=True):
         # udidを選択
-        print("Selecting a device...", end=" ", flush=True)
+        print("Connecting to device...", end=" ", flush=True)
         if os.path.exists("idx.pickle"):
             with open("idx.pickle", "rb") as pickle_f:
                 i = pickle.load(pickle_f)
@@ -224,11 +224,7 @@ class AnimalTowerDevice():
         with open("idx.pickle", "wb") as pickle_f:
             pickle.dump((i + 1) % len(udid_list), pickle_f)
         print(f"Done [{udid}]")
-
-        # 数秒待機
         sleep(rd.random() * 10)
-
-        print("Connecting to device...", end=" ", flush=True)
         caps = {
             "platformName": "android",
             "appium:udid": udid,
