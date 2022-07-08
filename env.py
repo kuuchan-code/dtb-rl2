@@ -2,6 +2,7 @@
 Deep reinforcement learning on the small base of the Animal Tower.
 """
 from __future__ import annotations
+import pickle
 import itertools
 from time import sleep, time
 import gym
@@ -131,17 +132,15 @@ class AnimalTower(gym.Env):
     """
 
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
-        sleep(rd.random() * 5)
-        if os.path.exists("tmp"):
-            os.remove("tmp")
-            my_udid = udid_list[0]
-            appium_port = "4723"
+        sleep(rd.random() * 10)
+        if os.path.exists("idx.pickle"):
+            with open("idx.pickle", "rb") as f:
+                i = pickle.load(f)
         else:
-            with open("tmp", "w") as f:
-                pass
-            my_udid = udid_list[1]
-            # appium_port = "4823"
-            appium_port = "4723"
+            i = 0
+        my_udid = udid_list[i]
+        with open("idx.pickle", "wb") as f:
+            pickle.dump((i + 1) % len(udid_list), f)
         self.SCREENSHOT_PATH = f"./screenshot_{my_udid}.png"
         print("Initializing...", end=" ", flush=True)
         print(my_udid)
@@ -161,9 +160,9 @@ class AnimalTower(gym.Env):
             "appium:newCommandTimeout": 3600,
             "appium:connectHardwareKeyboard": True
         }
-        print(f"http://localhost:{appium_port}/wd/hub")
+        print(f"http://localhost:4723/wd/hub")
         self.driver = webdriver.Remote(
-            f"http://localhost:{appium_port}/wd/hub", caps)
+            f"http://localhost:4723/wd/hub", caps)
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
