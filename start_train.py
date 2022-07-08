@@ -14,7 +14,8 @@ from datetime import datetime
 name_prefix = "_a2c_cnn_r4m3b_bin"
 now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 
-env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv")
+env = AnimalTower(
+    log_path=f"log/{name_prefix}_{now_str}.csv", x8_enabled=False)
 
 model = A2C(policy="CnnPolicy", env=env,
             verbose=2, tensorboard_log="tensorboard", learning_rate=0.0007)

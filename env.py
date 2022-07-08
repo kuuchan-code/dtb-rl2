@@ -124,7 +124,7 @@ class AnimalTower(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff):
+    def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff, x8_enabled=True):
         print("Initializing...", end=" ", flush=True)
         r = [0, 4, 6, 8]
         m = np.linspace(150, 929, 11, dtype=np.uint32)
@@ -143,6 +143,11 @@ class AnimalTower(gym.Env):
         }
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
+
+        self.driver.save_screenshot(SCREENSHOT_PATH)
+        img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+        print(img_bgr.shape)
+
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
@@ -151,6 +156,16 @@ class AnimalTower(gym.Env):
         self.total_step_count = 0
         self.episode_count = 0
         self.log_episode_max = log_episode_max
+
+        # x8が有効かどうかでタップ間隔を変える
+        if x8_enabled:
+            self.tap_intarval = 0.05
+            self.retry_intarval = 0.5
+            self.pooling_intarval = 0.1
+        else:
+            self.tap_intarval = 0.2
+            self.retry_intarval = 2
+            self.pooling_intarval = 0.4
 
         # ヘッダのみ書き込み
         with open(self.log_path, "w") as f:
@@ -174,7 +189,7 @@ class AnimalTower(gym.Env):
         while self.prev_height is None or self.prev_animal_count is None:
             # リトライボタンをタップして3秒待つ
             self._tap(COORDINATES_RETRY)
-            sleep(0.5)
+            sleep(self.retry_intarval)
             self.driver.save_screenshot(SCREENSHOT_PATH)
             img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
             obs = to_training_image(img_bgr)
@@ -248,7 +263,7 @@ class AnimalTower(gym.Env):
                 print("No height update")
                 reward = 1.0
                 break
-            sleep(0.1)
+            sleep(self.pooling_intarval)
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
@@ -287,7 +302,9 @@ class AnimalTower(gym.Env):
             for _ in range(a[0]):
                 self.operations.w3c_actions.pointer_action.click()
                 # 試した感じ0.05がバグらない最低値
-                self.operations.w3c_actions.pointer_action.pause(0.05)
+                # x8なしはわからない
+                self.operations.w3c_actions.pointer_action.pause(
+                    self.tap_intarval)
             # 重要
             self.operations.w3c_actions.perform()
         # 座標タップ
