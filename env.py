@@ -36,7 +36,8 @@ WHITE_DARK = WHITE - 15
 
 global_idx = 0
 
-udid_list = ["P3PDU18321001333", "353477091491152", "CB512C5QDQ"]
+# あさひくんの、私の、園田さん("CB512C5QDQ")の、
+udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
 
 def is_result_screen(img_gray: np.ndarray) -> bool:
     """
