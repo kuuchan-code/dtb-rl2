@@ -123,11 +123,13 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
 
 
-def is_off_x8(img_gray):
+def is_off_x8(img_gray, mag=1.0):
     """
     x8の停止を検知
     """
     template = cv2.imread("src/x8_start.png", 0)
+    h, w = template.shape
+    template = cv2.resize(template, (int(w*mag), int(h*mag)))
     res = cv2.matchTemplate(
         img_gray, template, cv2.TM_CCOEFF_NORMED)
     # print(res.max())
@@ -249,7 +251,7 @@ class AnimalTower(gym.Env):
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             # x8 speederが無効化された場合
-            if is_off_x8(img_gray):
+            if is_off_x8(img_gray, mag=self.height_mag):
                 print("x8 speederを適用")
                 self._tap((1032, 1857))
                 sleep(0.5)
