@@ -62,7 +62,18 @@ class AnimalTower(gym.Env):
         self.prev_height = None
         self.prev_animal_count = None
 
-        self.device = AnimalTowerDevice()
+        # udidを選択
+        if os.path.exists("idx.pickle"):
+            with open("idx.pickle", "rb") as pickle_f:
+                i = pickle.load(pickle_f)
+        else:
+            i = 0
+        udid = udid_list[i]
+        with open("idx.pickle", "wb") as pickle_f:
+            pickle.dump((i + 1) % len(udid_list), pickle_f)
+        sleep(rd.random() * 10)
+        print(f"Connecting to localhost:4723/wd/hub {udid}...")
+        self.device = AnimalTowerDevice(udid)
 
         self.total_step_count = 0
         self.episode_count = 0
@@ -79,8 +90,7 @@ class AnimalTower(gym.Env):
         """
         リセット
         """
-        print(f"Episode({self.episode_count + 1})")
-        print("Resetting...")
+        print(f"episode({self.episode_count + 1})")
         self.prev_height = None
         self.prev_animal_count = None
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
@@ -100,7 +110,6 @@ class AnimalTower(gym.Env):
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
             # デバッグ
             # print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
-        print("Done")
         t_1 = time()
         print(f"リセット所要時間: {t_1 - self.t_0:4.2f}秒")
         self.t_0 = t_1
@@ -110,7 +119,7 @@ class AnimalTower(gym.Env):
         """
         1アクション
         """
-        print(f"step({self.total_step_count + 1})")
+        print(f"Step({self.total_step_count + 1})")
         action = self.actions[action]
         print(
             f"Action({action[0]}/{self.actions.shape[0]-1}), {action[0], action[1]}")
@@ -129,6 +138,7 @@ class AnimalTower(gym.Env):
                 print(type(inst))
                 print(inst.args)
                 print(inst)
+                sleep(self.device.pooling_intarval)
                 continue
             self.device.img_gray = cv2.cvtColor(
                 self.device.img_bgr, cv2.COLOR_BGR2GRAY)
@@ -199,18 +209,7 @@ class AnimalTowerDevice():
     どうぶつタワーが起動してるデバイスに関するクラス
     """
 
-    def __init__(self, x8_enabled=True):
-        # udidを選択
-        if os.path.exists("idx.pickle"):
-            with open("idx.pickle", "rb") as pickle_f:
-                i = pickle.load(pickle_f)
-        else:
-            i = 0
-        udid = udid_list[i]
-        with open("idx.pickle", "wb") as pickle_f:
-            pickle.dump((i + 1) % len(udid_list), pickle_f)
-        sleep(rd.random() * 10)
-        print(f"Connecting to {udid}...")
+    def __init__(self, udid, x8_enabled=True):
         caps = {
             "platformName": "android",
             "appium:udid": udid,
@@ -244,7 +243,7 @@ class AnimalTowerDevice():
             self.retry_intarval = 2
             self.pooling_intarval = 0.4
         print(
-            f"Connected localhost:4723/wd/hub: {udid}, {self.img_bgr.shape}, {x8_enabled}")
+            f"Connected to {udid},  res{self.img_bgr.shape[:2]}, x8{x8_enabled}")
 
         self.img_gray = None
         self.img_bgr = None

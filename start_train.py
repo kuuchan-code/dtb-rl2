@@ -21,7 +21,6 @@ register_env("my_env", env_creator)
 #     print(f"{k}: {v}")
 # assert False
 
-print(dqn.R2D2_DEFAULT_CONFIG)
 trainer = dqn.R2D2Trainer(env="my_env", config={
     "framework": "tf",
     # R2D2 settings.
