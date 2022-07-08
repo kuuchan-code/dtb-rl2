@@ -2,6 +2,7 @@
 Deep reinforcement learning on the small base of the Animal Tower.
 """
 from __future__ import annotations
+import pickle
 import itertools
 from time import sleep, time
 import gym
@@ -12,6 +13,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.actions.pointer_input import PointerInput
 from selenium.webdriver.common.actions import interaction
+import random as rd
+import os
 
 
 SCREENSHOT_PATH = "./screenshot.png"
@@ -29,6 +32,15 @@ BACKGROUND_COLOR_DARK = BACKGROUND_COLOR - 4
 BLACK = np.zeros(3, dtype=np.uint8)
 WHITE = BLACK + 255
 WHITE_DARK = WHITE - 15
+
+global_idx = 0
+
+# あさひくんの、私の、園田さん("CB512C5QDQ")の、
+udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
+
+# 園田, Android5
+# udid_list = ["CB512C5QDQ", "482707805697"]
+# udid_list = ["353010080451240", "CB512C5QDQ"]
 
 
 def is_result_screen(img_gray: np.ndarray, mag=1.0) -> bool:
@@ -119,6 +131,7 @@ def to_training_image(img_bgr: np.ndarray) -> np.ndarray:
     # return resized_and_cropped_img_bin
 
     # 大きい盤面
+
     return cv2.bitwise_not(cv2.inRange(
         cv2.resize(img_bgr, dsize=TRAINNING_IMAGE_SIZE[::-1]), BACKGROUND_COLOR_DARK, WHITE))
 
@@ -142,22 +155,35 @@ class AnimalTower(gym.Env):
     """
 
     def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff, x8_enabled=True):
+        sleep(rd.random() * 10)
+        if os.path.exists("idx.pickle"):
+            with open("idx.pickle", "rb") as f:
+                i = pickle.load(f)
+        else:
+            i = 0
+        my_udid = udid_list[i]
+        with open("idx.pickle", "wb") as f:
+            pickle.dump((i + 1) % len(udid_list), f)
+        self.SCREENSHOT_PATH = f"./screenshot_{my_udid}.png"
         print("Initializing...", end=" ", flush=True)
-        r = [0, 4, 6, 8]
-        m = np.linspace(150, 929, 11, dtype=np.uint32)
+        print(my_udid)
+        r = [0, 6]
+        m = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
         self.ACTION_MAP = np.array([v for v in itertools.product(r, m)])
         # 出力サイズを変更し忘れていた!!
         self.action_space = gym.spaces.Discrete(self.ACTION_MAP.shape[0])
         self.observation_space = gym.spaces.Box(
-            low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
+            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
         caps = {
             "platformName": "android",
+            "appium:udid": my_udid,
             "appium:ensureWebviewHavePages": True,
             "appium:nativeWebScreenshot": True,
             "appium:newCommandTimeout": 3600,
             "appium:connectHardwareKeyboard": True
         }
+        print(f"http://localhost:4723/wd/hub")
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
 
@@ -170,16 +196,19 @@ class AnimalTower(gym.Env):
 
         self.move_tap_height = 800 * self.height_mag
 
-        # print(self.height_mag, self.width_mag, self.move_tap_height)
+        print(self.height_mag, self.width_mag, self.move_tap_height)
 
         self.operations = ActionChains(self.driver)
         self.operations.w3c_actions = ActionBuilder(
             self.driver, mouse=PointerInput(interaction.POINTER_TOUCH, "touch"))
-
         self.log_path = log_path
         self.total_step_count = 0
         self.episode_count = 0
         self.log_episode_max = log_episode_max
+
+        # そもそもx8が使えない
+        if my_udid == "482707805697":
+            x8_enabled = False
 
         # x8が有効かどうかでタップ間隔を変える
         if x8_enabled:
@@ -228,7 +257,7 @@ class AnimalTower(gym.Env):
         t1 = time()
         print(f"リセット所要時間: {t1 - self.t0:4.2f}秒")
         self.t0 = t1
-        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
+        return obs
 
     def step(self, action_index) -> tuple[np.ndarray, float, bool, dict]:
         """
@@ -246,8 +275,10 @@ class AnimalTower(gym.Env):
         done = False
         reward = 0.0
         while True:
-            self.driver.save_screenshot(SCREENSHOT_PATH)
-            img_bgr = cv2.imread(SCREENSHOT_PATH, 1)
+            self.driver.save_screenshot(self.SCREENSHOT_PATH)
+            img_bgr = cv2.imread(self.SCREENSHOT_PATH, 1)
+            if img_bgr is None:
+                continue
             obs = to_training_image(img_bgr)
             img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             # x8 speederが無効化された場合
@@ -300,10 +331,7 @@ class AnimalTower(gym.Env):
         self.t0 = t1
         print(f"return obs, {reward}, {done}, {{}}")
         print("-"*NUM_OF_DELIMITERS)
-        return np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE)), reward, done, {}
-
-    def render(self):
-        pass
+        return obs, reward, done, {}
 
     def _tap(self, coordinates: tuple) -> None:
         """

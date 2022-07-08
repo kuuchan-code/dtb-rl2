@@ -133,3 +133,4 @@ dmypy.json
 screenshot.png
 observation*.png
 train.csv
+*.pickle
