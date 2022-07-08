@@ -141,7 +141,7 @@ class AnimalTower(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, log_path="train.csv", log_episode_max=0x7fffffff, x8_enabled=True):
+    def __init__(self, udid=None, log_path="train.csv", log_episode_max=0x7fffffff, x8_enabled=True):
         print("Initializing...", end=" ", flush=True)
         r = [0, 4, 6, 8]
         m = np.linspace(150, 929, 11, dtype=np.uint32)
@@ -158,6 +158,8 @@ class AnimalTower(gym.Env):
             "appium:newCommandTimeout": 3600,
             "appium:connectHardwareKeyboard": True
         }
+        if udid is not None:
+            caps["appium:udid"] = udid
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
 
