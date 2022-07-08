@@ -90,8 +90,7 @@ class AnimalTower(gym.Env):
         """
         リセット
         """
-        print(f"Episode({self.episode_count + 1})")
-        print("Resetting...")
+        print(f"episode({self.episode_count + 1})")
         self.prev_height = None
         self.prev_animal_count = None
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
@@ -111,7 +110,6 @@ class AnimalTower(gym.Env):
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
             # デバッグ
             # print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
-        print("Done")
         t_1 = time()
         print(f"リセット所要時間: {t_1 - self.t_0:4.2f}秒")
         self.t_0 = t_1
