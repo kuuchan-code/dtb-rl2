@@ -140,6 +140,7 @@ class AnimalTower(gym.Env):
                 print(type(inst))
                 print(inst.args)
                 print(inst)
+                sleep(self.device.pooling_intarval)
                 continue
             self.device.img_gray = cv2.cvtColor(
                 self.device.img_bgr, cv2.COLOR_BGR2GRAY)
