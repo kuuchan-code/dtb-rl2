@@ -97,7 +97,7 @@ class AnimalTower(gym.Env):
         リセット
         """
         print(f"Episode({self.episode_count + 1})")
-        print("Resetting...", end=" ", flush=True)
+        print("Resetting...")
         self.prev_height = None
         self.prev_animal_count = None
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
@@ -106,7 +106,7 @@ class AnimalTower(gym.Env):
             self.device.tap(COORDINATES_RETRY)
             sleep(self.device.retry_intarval)
             self.device.driver.save_screenshot(self.device.screenshot_path)
-            img_bgr = cv2.imread(self.device.screenshot_path, 1)
+            self.device.img_bgr = cv2.imread(self.device.screenshot_path, 1)
             obs = to_training_image(img_bgr)
             self.device.img_gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
             self.prev_height = self.device.get_height(
@@ -222,7 +222,7 @@ class AnimalTowerDevice():
         with open("idx.pickle", "wb") as pickle_f:
             pickle.dump((i + 1) % len(udid_list), pickle_f)
         sleep(rd.random() * 10)
-        print(f"Connecting to {udid}...", end=" ", flush=True)
+        print(f"Connecting to {udid}...")
         caps = {
             "platformName": "android",
             "appium:udid": udid,
@@ -233,12 +233,9 @@ class AnimalTowerDevice():
         }
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
-        print(f"Done [localhost:4723/wd/hub: {udid}]")
-
-        print("Checking device...", end=" ", flush=True)
         self.screenshot_path = f"./screenshot_{udid}.png"
         self.driver.save_screenshot(self.screenshot_path)
-        img_bgr = cv2.imread(self.screenshot_path, 1)
+        self.img_bgr = cv2.imread(self.screenshot_path, 1)
         self.mag = img_bgr.shape[0] / 1920, img_bgr.shape[1] / 1080
         self.actions = ActionChains(self.driver)
         self.actions.w3c_actions = ActionBuilder(
@@ -258,7 +255,7 @@ class AnimalTowerDevice():
             self.tap_intarval = 0.2
             self.retry_intarval = 2
             self.pooling_intarval = 0.4
-        print(f"Done [{img_bgr.shape}, {x8_enabled}(x8)]")
+        print(f"Connected localhost:4723/wd/hub: {udid}, {img_bgr.shape}, {x8_enabled}")
 
         self.img_gray = None
         self.img_bgr = None
