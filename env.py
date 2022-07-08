@@ -31,14 +31,16 @@ WHITE = BLACK + 255
 WHITE_DARK = WHITE - 15
 
 
-def is_result_screen(img_gray: np.ndarray) -> bool:
+def is_result_screen(img_gray: np.ndarray, mag=1.0) -> bool:
     """
     Check the back button to determine game end.
     """
     template = cv2.imread("src/back.png", 0)
+    h, w = template.shape
+    template = cv2.resize(template, (int(w*mag), int(h*mag)))
     res = cv2.matchTemplate(
         img_gray, template, cv2.TM_CCOEFF_NORMED)
-    # print(res.max())
+    print("バックボタン一致率", res.max())
     return res.max() >= TEMPLATE_MATCHING_THRESHOLD
 
 
@@ -52,12 +54,11 @@ def get_height(img_gray: np.ndarray, mag=1.0) -> float | None:
         template = cv2.imread(f"src/height{i}.png", 0)
         h, w = template.shape
         template = cv2.resize(template, (int(w*mag), int(h*mag)))
-        # print(template.shape)
         res = cv2.matchTemplate(
             img_gray_height, template, cv2.TM_CCOEFF_NORMED)
-        # print(res.max())
         loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
         for loc_y in loc[1]:
+            print(res[loc[0], loc[1]])
             dict_digits[loc_y] = i
     height = ""
     for key in sorted(dict_digits.items()):
@@ -253,7 +254,7 @@ class AnimalTower(gym.Env):
             print(
                 f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}")
             # 終端
-            if is_result_screen(img_gray):
+            if is_result_screen(img_gray, mag=self.height_mag):
                 print("Game over")
                 done = True
                 # ログファイルに書き出し
