@@ -9,7 +9,7 @@ import random as rd
 import os
 import gym
 import numpy as np
-from cv2 import cv2
+import cv2
 from appium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
@@ -264,7 +264,7 @@ class AnimalTowerDevice():
             self.tap_intarval = 0.2
             self.retry_intarval = 2
             self.pooling_intarval = 0.4
-        print(f"Done [{img_bgr.shape}, {x8_enabled}(x8)]")
+        print(f"Done [{img_bgr.shape}, {self.x8_enabled}(x8)]")
 
         self.img_gray = None
         self.img_bgr = None
