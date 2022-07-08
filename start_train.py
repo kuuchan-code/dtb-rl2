@@ -31,7 +31,7 @@ trainer = dqn.R2D2Trainer(env="my_env", config={
         "fcnet_hiddens": [256, 256],  # [256, 256]
         "use_lstm": True,  # False
         "lstm_cell_size": 256,  # 256
-        "max_seq_len": 10  # 20
+        "max_seq_len": 5  # 20
     }
 })
 
