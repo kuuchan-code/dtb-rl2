@@ -119,7 +119,7 @@ class AnimalTower(gym.Env):
         """
         1アクション
         """
-        print(f"step({self.total_step_count + 1})")
+        print(f"Step({self.total_step_count + 1})")
         action = self.actions[action]
         print(
             f"Action({action[0]}/{self.actions.shape[0]-1}), {action[0], action[1]}")
