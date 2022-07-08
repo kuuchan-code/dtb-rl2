@@ -309,7 +309,6 @@ class AnimalTower(gym.Env):
         """
         x = coordinates[0] * self.width_mag
         y = coordinates[1] * self.height_mag
-        # print(x, y)
         self.operations.w3c_actions.pointer_action.move_to_location(
             x, y)
         self.operations.w3c_actions.pointer_action.click()
@@ -333,7 +332,7 @@ class AnimalTower(gym.Env):
                     self.tap_intarval)
             # 重要
             self.operations.w3c_actions.perform()
-        print(a[1] * self.width_mag, self.move_tap_height)
+        # print(a[1] * self.width_mag, self.move_tap_height)
         # 座標タップ
         self.operations.w3c_actions.pointer_action.move_to_location(
             a[1] * self.width_mag, self.move_tap_height)
