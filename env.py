@@ -19,8 +19,6 @@ from selenium.webdriver.common.actions import interaction
 
 SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
-TEMPLATE_MATCHING_THRESHOLD = 0.99
-ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.85
 TRAINNING_IMAGE_SIZE = 256, 75  # small
 TRAINNING_IMAGE_SIZE = 256, 144  # big
 NUM_OF_DELIMITERS = 36
@@ -138,15 +136,6 @@ class AnimalTower(gym.Env):
                 print(inst)
                 sleep(self.device.pooling_intarval)
                 continue
-            # x8 speederが無効化された場合
-            if self.device.is_off_x8(mag=self.device.mag[0]):
-                print("x8 speederを適用")
-                self.device.tap((1032, 1857))
-                sleep(0.5)
-                self.device.tap((726, 1171))
-                sleep(5)
-                # 画像は再読込
-                continue
             # ループで必ず高さと動物数を取得
             height = self.device.get_height()
             animal_count = self.device.get_animal_count()
@@ -165,7 +154,7 @@ class AnimalTower(gym.Env):
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
-                print("結果画面遷移中")
+                print("数値取得失敗")
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
                 # 更新があっても, 煙があるかもしれないので撮り直し
@@ -234,8 +223,8 @@ class AnimalTowerDevice():
 
         # x8無効の場合の時間を定義
         self.tap_intarval = 0.2
-        self.retry_intarval = 3
-        self.pooling_intarval = 0.4
+        self.retry_intarval = 3.0
+        self.pooling_intarval = 1.0
         # そもそもx8が使えない端末
         if udid == "482707805697":
             print("x8が使えない端末")
@@ -258,6 +247,16 @@ class AnimalTowerDevice():
         self.driver.save_screenshot(self.screenshot_path)
         self.img_bgr = cv2.imread(self.screenshot_path, 1)
         self.img_gray = cv2.cvtColor(self.img_bgr, cv2.COLOR_BGR2GRAY)
+        # x8 speederが無効化された場合
+        # deviceが勝手に判断
+        if self.is_off_x8(mag=self.mag[0]):
+            print("x8 speederを適用")
+            self.tap((1032, 1857))
+            sleep(0.5)
+            self.tap((726, 1171))
+            sleep(5)
+            # 再帰呼出し
+            self.update_image()
 
     def is_off_x8(self, mag=1.0):
         """
@@ -310,8 +309,7 @@ class AnimalTowerDevice():
         # 例外処理で対応
         try:
             height = float(height)
-        except ValueError as e:
-            print("数値変換無効")
+        except ValueError:
             height = None
         return height
 
