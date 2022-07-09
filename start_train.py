@@ -36,5 +36,7 @@ try:
     model.learn(total_timesteps=10000, callback=[checkpoint_callback])
 except WebDriverException as e:
     print("接続切れ?")
+    raise e
 except KeyboardInterrupt as e:
     print("キーボード割り込み")
+    raise e
