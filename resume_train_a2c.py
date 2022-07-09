@@ -19,7 +19,9 @@ now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
 print(f"Load {model_path}")
 
-env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv", x8_enabled=True)
+env = AnimalTower(
+    log_path=f"log/{name_prefix}_{now_str}.csv", x8_enabled=True
+)
 
 model = A2C.load(
     path=model_path,
