@@ -20,10 +20,7 @@ model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
 print(f"Load {model_path}")
 
 # udidはメルカリで買った黒いやつ
-env = AnimalTower(
-    udid="790908812299",
-    log_path=f"log/{name_prefix}_{now_str}.csv"
-)
+env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv")
 
 model = A2C.load(path=model_path,
                  env=env, tensorboard_log="tensorboard", device="cpu")
