@@ -219,7 +219,7 @@ class AnimalTowerDevice():
         # HDかどうか
         self.is_hd = self.img_bgr.shape[0] == 1280
         self.move_tap_height = int(800 * self.mag[0])
-        print(self.mag, self.is_hd, self.move_tap_height)
+        # print(self.mag, self.is_hd, self.move_tap_height)
 
         # x8無効の場合の時間を定義
         self.tap_intarval = 0.2

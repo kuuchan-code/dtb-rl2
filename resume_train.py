@@ -20,17 +20,19 @@ model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
 print(f"Load {model_path}")
 
 # udidはメルカリで買った黒いやつ
-env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv")
+env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv", x8_enabled=True)
 
 model = A2C.load(path=model_path,
                  env=env, tensorboard_log="tensorboard", device="cpu")
 
 
-checkpoint_callback = CheckpointCallback(save_freq=50, save_path="models",
+checkpoint_callback = CheckpointCallback(save_freq=100, save_path="models",
                                          name_prefix=name_prefix)
 try:
     model.learn(total_timesteps=10000, callback=[checkpoint_callback])
 except WebDriverException as e:
     print("接続切れ?")
+    raise e
 except KeyboardInterrupt as e:
     print("キーボード割り込み")
+    raise e
