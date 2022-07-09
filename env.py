@@ -4,6 +4,7 @@ Deep reinforcement learning on the small base of the Animal Tower.
 from __future__ import annotations
 import pickle
 import itertools
+import re
 from time import sleep, time
 import random as rd
 import os
@@ -18,7 +19,7 @@ from selenium.webdriver.common.actions import interaction
 
 SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
-TEMPLATE_MATCHING_THRESHOLD = 0.98
+TEMPLATE_MATCHING_THRESHOLD = 0.99
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.85
 TRAINNING_IMAGE_SIZE = 256, 75  # small
 TRAINNING_IMAGE_SIZE = 256, 144  # big
@@ -32,8 +33,6 @@ BLACK = np.zeros(3, dtype=np.uint8)
 WHITE = BLACK + 255
 WHITE_DARK = WHITE - 15
 
-GLOBAL_IDX = 0
-LOG_EPISODE_MAX = 0x7fffffff
 
 # あさひくんの、私の、園田さん("CB512C5QDQ")の、
 udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
@@ -48,7 +47,7 @@ class AnimalTower(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, log_path="train.csv"):
+    def __init__(self, log_path="train.csv", x8_enabled=True):
         rotate = [0, 4, 6, 8]
         move = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
         self.actions = np.array(list(itertools.product(rotate, move)))
@@ -75,7 +74,7 @@ class AnimalTower(gym.Env):
         udid = "482707805697"
         sleep(rd.random() * 10)
         print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
-        self.device = AnimalTowerDevice(udid)
+        self.device = AnimalTowerDevice(udid, x8_enabled)
 
         self.total_step_count = 0
         self.episode_count = 0
@@ -102,11 +101,8 @@ class AnimalTower(gym.Env):
             # リトライボタンをタップして3秒待つ
             self.device.tap(COORDINATES_RETRY)
             sleep(self.device.retry_intarval)
-            self.device.driver.save_screenshot(self.device.screenshot_path)
-            self.device.img_bgr = cv2.imread(self.device.screenshot_path, 1)
+            self.device.update_image()
             obs = self.device.to_training_image()
-            self.device.img_gray = cv2.cvtColor(
-                self.device.img_bgr, cv2.COLOR_BGR2GRAY)
             self.prev_height = self.device.get_height()
             self.prev_animal_count = self.device.get_animal_count()
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
@@ -127,15 +123,13 @@ class AnimalTower(gym.Env):
             f"Action({action[0]}/{self.actions.shape[0]-1}), {action[0], action[1]}")
         # 回転と移動
         self.device.rotate_and_move(action)
-        sleep(0.7)
         # 変数の初期化
         done = False
         reward = 0.0
         # 動物登場時の煙
         maybe_smoke = True
         while True:
-            self.device.driver.save_screenshot(self.device.screenshot_path)
-            self.device.img_bgr = cv2.imread(self.device.screenshot_path, 1)
+            self.device.update_image()
             try:
                 obs = self.device.to_training_image()
             except Exception as inst:
@@ -144,8 +138,6 @@ class AnimalTower(gym.Env):
                 print(inst)
                 sleep(self.device.pooling_intarval)
                 continue
-            self.device.img_gray = cv2.cvtColor(
-                self.device.img_bgr, cv2.COLOR_BGR2GRAY)
             # x8 speederが無効化された場合
             if self.device.is_off_x8(mag=self.device.mag[0]):
                 print("x8 speederを適用")
@@ -170,7 +162,6 @@ class AnimalTower(gym.Env):
                     print(
                         f"{self.prev_animal_count},{self.prev_height}", file=log_f)
                 self.episode_count += 1
-                assert self.episode_count < LOG_EPISODE_MAX, f"エピソード{LOG_EPISODE_MAX}到達"
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
@@ -239,23 +230,34 @@ class AnimalTowerDevice():
         # HDかどうか
         self.is_hd = self.img_bgr.shape[0] == 1280
         self.move_tap_height = int(800 * self.mag[0])
+        print(self.mag, self.is_hd, self.move_tap_height)
+
+        # x8無効の場合の時間を定義
+        self.tap_intarval = 0.2
+        self.retry_intarval = 3
+        self.pooling_intarval = 0.4
         # そもそもx8が使えない端末
         if udid == "482707805697":
+            print("x8が使えない端末")
             x8_enabled = False
         # x8が有効かどうかでタップ間隔を変える
         if x8_enabled:
             self.tap_intarval = 0.05
             self.retry_intarval = 0.5
             self.pooling_intarval = 0.1
-        else:
-            self.tap_intarval = 0.2
-            self.retry_intarval = 2
-            self.pooling_intarval = 0.4
         print(
             f"Connected to {udid},  res{self.img_bgr.shape[:2]}, x8({x8_enabled})")
 
         self.img_gray = None
         self.img_bgr = None
+
+    def update_image(self):
+        """
+        スクショを撮って変数更新
+        """
+        self.driver.save_screenshot(self.screenshot_path)
+        self.img_bgr = cv2.imread(self.screenshot_path, 1)
+        self.img_gray = cv2.cvtColor(self.img_bgr, cv2.COLOR_BGR2GRAY)
 
     def is_off_x8(self, mag=1.0):
         """
@@ -296,7 +298,7 @@ class AnimalTowerDevice():
             template = cv2.imread(fnamer_format(i), 1)
             res = cv2.matchTemplate(
                 cropped_img_bgr, template, cv2.TM_CCOEFF_NORMED)
-            loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
+            loc = np.where(res >= 0.99)
             for loc_y in loc[1]:
                 dict_digits[loc_y] = i
         height = ""
@@ -305,9 +307,11 @@ class AnimalTowerDevice():
                 height += "."
             else:
                 height += str(key)
-        if height:
+        # 例外処理で対応
+        try:
             height = float(height)
-        else:
+        except ValueError as e:
+            print("数値変換無効")
             height = None
         return height
 
@@ -330,7 +334,7 @@ class AnimalTowerDevice():
             template = cv2.imread(fnamer_format(i), 0)
             res = cv2.matchTemplate(
                 img_shadow, template, cv2.TM_CCOEFF_NORMED)
-            loc = np.where(res >= TEMPLATE_MATCHING_THRESHOLD)
+            loc = np.where(res >= 0.97)
             for y in loc[1]:
                 dict_digits[y] = i
         if dict_digits:
