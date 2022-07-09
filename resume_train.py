@@ -19,15 +19,18 @@ now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
 print(f"Load {model_path}")
 
-# udidはメルカリで買った黒いやつ
 env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv", x8_enabled=True)
 
-model = A2C.load(path=model_path,
-                 env=env, tensorboard_log="tensorboard", device="cpu")
+model = A2C.load(
+    path=model_path,
+    env=env, tensorboard_log="tensorboard", device="cpu", print_system_info=True
+)
 
 
-checkpoint_callback = CheckpointCallback(save_freq=100, save_path="models",
-                                         name_prefix=name_prefix)
+checkpoint_callback = CheckpointCallback(
+    save_freq=100, save_path="models",
+    name_prefix=name_prefix
+)
 try:
     model.learn(total_timesteps=10000, callback=[checkpoint_callback])
 except WebDriverException as e:
