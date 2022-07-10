@@ -16,6 +16,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.actions.pointer_input import PointerInput
 from selenium.webdriver.common.actions import interaction
+from datetime import datetime
 
 SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
@@ -45,7 +46,7 @@ class AnimalTower(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, log_path="train.csv", x8_enabled=True):
+    def __init__(self, udid=None, log_prefix="train", x8_enabled=True):
         rotate = [0, 4, 6, 8]
         move = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
         self.actions = np.array(list(itertools.product(rotate, move)))
@@ -69,20 +70,27 @@ class AnimalTower(gym.Env):
         #     pickle.dump((i + 1) % len(udid_list), pickle_f)
         # udid = "790908812299"
         # udid = "CB512C5QDQ"
-        udid = "482707805697"
+        # udid = "482707805697"
         sleep(rd.random() * 10)
         print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
         self.device = AnimalTowerDevice(udid, x8_enabled)
 
+        self.episode_step_count = 0
         self.total_step_count = 0
         self.episode_count = 0
 
-        self.log_path = log_path
+        now = datetime.now().strftime("%Y%m%d%H%M%S")
+
+        self.result_log_path = f"{log_prefix}_result_{now}.csv"
+        self.action_log_path = f"{log_prefix}_action_{now}.scv"
 
         # ヘッダのみ書き込み
-        with open(self.log_path, "w", encoding="utf-8") as log_f:
+        with open(self.result_log_path, "w", encoding="utf-8") as log_f:
             print("animals,height", file=log_f)
-        print(f"{self.log_path} created or overwritten.")
+        with open(self.action_log_path, "w", encoding="utf-8") as log_f:
+            print("step,action", file=log_f)
+
+        print(f"{self.result_log_path} created or overwritten.")
 
         # 時間計測用
         self.t_0 = time()
@@ -91,6 +99,7 @@ class AnimalTower(gym.Env):
         """
         リセット
         """
+        self.episode_step_count = 0
         self.episode_count += 1
         print(f"episode({self.episode_count})")
         self.prev_height = None
@@ -120,6 +129,10 @@ class AnimalTower(gym.Env):
         action = self.actions[action]
         print(
             f"Action({action[0]}/{self.actions.shape[0]-1}), {action[0], action[1]}")
+        # 行動記録
+        with open(self.action_log_path, "w", encoding="utf-8") as log_f:
+            print(f"{self.episode_step_count},{action}", file=log_f)
+
         # 回転と移動
         self.device.rotate_and_move(action)
         # 変数の初期化
@@ -148,7 +161,7 @@ class AnimalTower(gym.Env):
                 print("Game over")
                 done = True
                 # ログファイルに書き出し
-                with open(self.log_path, "a", encoding="utf-8") as log_f:
+                with open(self.result_log_path, "a", encoding="utf-8") as log_f:
                     print(
                         f"{self.prev_animal_count},{self.prev_height}", file=log_f)
                 break
@@ -172,6 +185,7 @@ class AnimalTower(gym.Env):
         # ステップの終わりに高さと動物数を更新
         self.prev_height = height
         self.prev_animal_count = animal_count
+        self.episode_step_count += 1
         self.total_step_count += 1
         # 共通処理
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
@@ -197,15 +211,16 @@ class AnimalTowerDevice():
     どうぶつタワーが起動してるデバイスに関するクラス
     """
 
-    def __init__(self, udid, x8_enabled=True):
+    def __init__(self, udid=None, x8_enabled=True):
         caps = {
             "platformName": "android",
-            "appium:udid": udid,
             "appium:ensureWebviewHavePages": True,
             "appium:nativeWebScreenshot": True,
             "appium:newCommandTimeout": 3600,
             "appium:connectHardwareKeyboard": True
         }
+        if udid is not None:
+            caps["appium:udid"] = udid
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
         self.screenshot_path = f"./screenshot_{udid}.png"
@@ -297,7 +312,8 @@ class AnimalTowerDevice():
             template = cv2.imread(fnamer_format(i), 1)
             res = cv2.matchTemplate(
                 cropped_img_bgr, template, cv2.TM_CCOEFF_NORMED)
-            loc = np.where(res >= 0.99)
+            # まだ調整が必要かもしれない
+            loc = np.where(res >= 0.98)
             for loc_y in loc[1]:
                 dict_digits[loc_y] = i
         height = ""
