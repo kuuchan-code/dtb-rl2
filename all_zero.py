@@ -5,13 +5,14 @@
 import random as rd
 from env import AnimalTower
 
-# ランダム
-env = AnimalTower(log_episode_max=100)
+# 中央の6
+env = AnimalTower(udid="790908812299", log_prefix="all_6_560", x8_enabled=True)
 
 obs = env.reset()
-for i in range(10000):
-    action = 0
-    obs, reward, done, info = env.step(action)
+# 1000エピソードサンプルを集めたい
+for i in range(1000):
+    # action = 0
+    obs, reward, done, info = env.step(27)
     env.render()
     if done:
         obs = env.reset()
