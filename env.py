@@ -50,8 +50,9 @@ class AnimalTower(gym.Env):
         rotate = [0, 4, 6, 8]
         move = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
         self.actions = np.array(list(itertools.product(rotate, move)))
-
-        self.action_space = gym.spaces.Discrete(self.actions.shape[0])
+        # 行動パターン数
+        self.action_patterns = self.actions.shape[0]
+        self.action_space = gym.spaces.Discrete(self.action_patterns)
         self.observation_space = gym.spaces.Box(
             low=0, high=255, shape=(1, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
@@ -81,7 +82,7 @@ class AnimalTower(gym.Env):
 
         now = datetime.now().strftime("%Y%m%d%H%M%S")
         self.result_log_path = f"log/{log_prefix}_result_{now}.csv"
-        self.action_log_path = f"log/{log_prefix}_action_{now}.scv"
+        self.action_log_path = f"log/{log_prefix}_action_{now}.csv"
 
         # ヘッダのみ書き込み
         with open(self.result_log_path, "w", encoding="utf-8") as log_f:

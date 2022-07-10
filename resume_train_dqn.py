@@ -20,11 +20,13 @@ model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
 print(f"Load {model_path}")
 
 # udidはメルカリで買った黒いやつ
-env = AnimalTower(log_path=f"log/{name_prefix}_{now_str}.csv", x8_enabled=True)
+env = AnimalTower(udid="790908812299", log_prefix=name_prefix, x8_enabled=True)
+
+device = "auto"
 
 model = DQN.load(
     path=model_path,
-    env=env, tensorboard_log="tensorboard", device="cpu",
+    env=env, tensorboard_log="tensorboard", device=device,
     print_system_info=True
 )
 
