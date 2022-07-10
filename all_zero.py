@@ -10,7 +10,9 @@ env = AnimalTower(udid="CB512C5QDQ",
                   log_prefix="random_r4m11b", x8_enabled=True)
 
 # 1000エピソードサンプルを集めたい
-for i in range(1000-261):
+ep_max = 384
+for i in range(ep_max):
+    print(f"あと {ep_max - i} エピソード")
     obs = env.reset()
     done = False
     while not done:
