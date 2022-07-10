@@ -218,9 +218,10 @@ class AnimalTowerDevice():
             "appium:newCommandTimeout": 3600,
             "appium:connectHardwareKeyboard": True
         }
-        if udid is not None:
-            caps["appium:udid"] = udid
+        if udid is None:
             udid = "any"
+        else:
+            caps["appium:udid"] = udid
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
         self.screenshot_path = f"./screenshot_{udid}.png"
