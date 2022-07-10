@@ -67,9 +67,9 @@ class AnimalTower(gym.Env):
         # udid = udid_list[i]
         # with open("idx.pickle", "wb") as pickle_f:
         #     pickle.dump((i + 1) % len(udid_list), pickle_f)
-        udid = "790908812299"
+        # udid = "790908812299"
         # udid = "CB512C5QDQ"
-        # udid = "482707805697"
+        udid = "482707805697"
         sleep(rd.random() * 10)
         print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
         self.device = AnimalTowerDevice(udid, x8_enabled)
@@ -91,7 +91,8 @@ class AnimalTower(gym.Env):
         """
         リセット
         """
-        print(f"episode({self.episode_count + 1})")
+        self.episode_count += 1
+        print(f"episode({self.episode_count})")
         self.prev_height = None
         self.prev_animal_count = None
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
@@ -150,7 +151,6 @@ class AnimalTower(gym.Env):
                 with open(self.log_path, "a", encoding="utf-8") as log_f:
                     print(
                         f"{self.prev_animal_count},{self.prev_height}", file=log_f)
-                self.episode_count += 1
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
