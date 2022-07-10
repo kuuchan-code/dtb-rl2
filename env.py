@@ -81,7 +81,7 @@ class AnimalTower(gym.Env):
 
         now = datetime.now().strftime("%Y%m%d%H%M%S")
         self.result_log_path = f"log/{log_prefix}_result_{now}.csv"
-        self.action_log_path = f"log/{log_prefix}_action_{now}.scv"
+        self.action_log_path = f"log/{log_prefix}_action_{now}.csv"
 
         # ヘッダのみ書き込み
         with open(self.result_log_path, "w", encoding="utf-8") as log_f:
