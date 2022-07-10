@@ -121,17 +121,17 @@ class AnimalTower(gym.Env):
         self.t_0 = t_1
         return obs
 
-    def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
+    def step(self, action_index) -> tuple[np.ndarray, float, bool, dict]:
         """
         1アクション
         """
         print(f"Step({self.total_step_count + 1})")
-        action = self.actions[action]
+        action = self.actions[action_index]
         print(
             f"Action({action[0]}/{self.actions.shape[0]-1}), {action[0], action[1]}")
-        # 行動記録
-        with open(self.action_log_path, "w", encoding="utf-8") as log_f:
-            print(f"{self.episode_step_count},{action}", file=log_f)
+        # 行動記録 (ステップと行動の添字)
+        with open(self.action_log_path, "a", encoding="utf-8") as log_f:
+            print(f"{self.episode_step_count},{action_index}", file=log_f)
 
         # 回転と移動
         self.device.rotate_and_move(action)
@@ -221,6 +221,7 @@ class AnimalTowerDevice():
         }
         if udid is not None:
             caps["appium:udid"] = udid
+            udid = "any"
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
         self.screenshot_path = f"./screenshot_{udid}.png"

@@ -8,15 +8,13 @@ from stable_baselines3 import A2C, DQN
 from stable_baselines3.common.callbacks import CheckpointCallback
 from env import AnimalTower
 from selenium.common.exceptions import WebDriverException
-from datetime import datetime
 import json
 
 
 name_prefix = "_dqn_cnn_r4m11b"
-now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 
 # udidは適宜変更
-env = AnimalTower()
+env = AnimalTower(udid="790908812299", log_prefix=name_prefix)
 
 # model = A2C(policy="CnnPolicy", env=env,
 #             verbose=2, tensorboard_log="tensorboard", learning_rate=0.0007)
