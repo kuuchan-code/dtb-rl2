@@ -31,8 +31,8 @@ if args.model == "DQN":
     # 適当にパラメータセットしてみる
     # 学習開始のデフォルトが50000とかだったので, うまく学習できてなかった?
     model = DQN(
-        policy="CnnPolicy", env=env, learning_rate=0.001, buffer_size=1000,
-        learning_starts=500, batch_size=32, tau=0.5, gamma=0.999, train_freq=(10, "episode"),
+        policy="CnnPolicy", env=env, learning_rate=0.001, buffer_size=2000,
+        learning_starts=1000, batch_size=32, tau=0.5, gamma=0.999, train_freq=(10, "episode"),
         replay_buffer_class=None, optimize_memory_usage=True
     )
 else:

@@ -174,12 +174,18 @@ class AnimalTower(gym.Env):
                 if maybe_smoke:
                     maybe_smoke = False
                     continue
-                # ついでに高さ更新を検知
-                if height > self.prev_height:
+
+                # 高さの差を計算
+                height_diff = height - self.prev_height
+                if height_diff > 0:
                     print(f"Height update: {height}m")
                 else:
                     print("No height update")
-                reward = 1.0
+
+                # 高さの差が+0.5未満のみ報酬を与える
+                # 同じ座標だけ選ぶのを回避したい
+                if height_diff < 0.5:
+                    reward = 1.0
                 break
             sleep(self.device.pooling_intarval)
         # ステップの終わりに高さと動物数を更新
