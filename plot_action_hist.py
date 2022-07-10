@@ -37,7 +37,7 @@ class RangeCheck(object):
 
 parser = argparse.ArgumentParser(description="学習の推移を描画")
 parser.add_argument("file", help="読み込むファイル")
-parser.add_argument("N", help="行動パターン数", type=int, choices=RangeCheck(low_limit=10), default=50
+parser.add_argument("N", help="行動パターン数", type=int, choices=RangeCheck(low_limit=1), default=50
                     )
 
 
