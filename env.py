@@ -80,9 +80,8 @@ class AnimalTower(gym.Env):
         self.episode_count = 0
 
         now = datetime.now().strftime("%Y%m%d%H%M%S")
-
-        self.result_log_path = f"{log_prefix}_result_{now}.csv"
-        self.action_log_path = f"{log_prefix}_action_{now}.scv"
+        self.result_log_path = f"log/{log_prefix}_result_{now}.csv"
+        self.action_log_path = f"log/{log_prefix}_action_{now}.scv"
 
         # ヘッダのみ書き込み
         with open(self.result_log_path, "w", encoding="utf-8") as log_f:
@@ -128,7 +127,7 @@ class AnimalTower(gym.Env):
         print(f"Step({self.total_step_count + 1})")
         action = self.actions[action_index]
         print(
-            f"Action({action[0]}/{self.actions.shape[0]-1}), {action[0], action[1]}")
+            f"Action({action_index}/{self.actions.shape[0]-1}), {action[0], action[1]}")
         # 行動記録 (ステップと行動の添字)
         with open(self.action_log_path, "a", encoding="utf-8") as log_f:
             print(f"{self.episode_step_count},{action_index}", file=log_f)

@@ -14,7 +14,8 @@ import json
 name_prefix = "_dqn_cnn_r4m11b"
 
 # udidは適宜変更
-env = AnimalTower(udid="790908812299", log_prefix=name_prefix)
+env = AnimalTower(udid="790908812299",
+                  log_prefix=name_prefix, x8_enabled=False)
 
 # model = A2C(policy="CnnPolicy", env=env,
 #             verbose=2, tensorboard_log="tensorboard", learning_rate=0.0007)
