@@ -7,25 +7,26 @@ import os
 from stable_baselines3 import A2C
 from stable_baselines3.common.callbacks import CheckpointCallback
 from env import AnimalTower
-from datetime import datetime
 from selenium.common.exceptions import WebDriverException
 
 # 識別子
 name_prefix = "_a2c_cnn_r4m11b"
-# 時刻
-now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 
 # 最新のモデルを読み込むように
 model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
 print(f"Load {model_path}")
 
-env = AnimalTower(
-    log_path=f"log/{name_prefix}_{now_str}.csv", x8_enabled=True
-)
+env = AnimalTower(udid="482707805697",
+                  log_prefix=name_prefix, x8_enabled=False)
+
+# device = "cpu"
+device = "auto"
 
 model = A2C.load(
     path=model_path,
-    env=env, tensorboard_log="tensorboard", device="cpu", print_system_info=True
+    env=env, tensorboard_log="tensorboard",
+    device=device,
+    print_system_info=True
 )
 
 
@@ -34,7 +35,7 @@ checkpoint_callback = CheckpointCallback(
     name_prefix=name_prefix
 )
 try:
-    model.learn(total_timesteps=10000, callback=[checkpoint_callback])
+    model.learn(total_timesteps=20000, callback=[checkpoint_callback])
 except WebDriverException as e:
     print("接続切れ?")
     raise e
