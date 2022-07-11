@@ -11,7 +11,7 @@ from datetime import datetime
 from selenium.common.exceptions import WebDriverException
 
 # 識別子
-name_prefix = "_dqn_cnn_r4m11b"
+name_prefix = "_dqn_cnn_r4m11b_hh"
 # 時刻
 now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 
