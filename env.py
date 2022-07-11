@@ -37,7 +37,8 @@ LOG_PATH = "train.csv"
 LOG_EPISODE_MAX = 0x7fffffff
 
 # あさひくんの、私の、園田さん("CB512C5QDQ")の、
-udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
+udid_list = ["790908812299"]
+# udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
 
 # 園田, Android5
 # udid_list = ["CB512C5QDQ", "482707805697"]
@@ -49,7 +50,7 @@ class AnimalTower(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self):
+    def __init__(self, cfg):
         rotate = [0, 6]
         move = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
         self.actions = np.array(list(itertools.product(rotate, move)))
