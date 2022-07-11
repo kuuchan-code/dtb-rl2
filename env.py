@@ -21,7 +21,7 @@ SCREENSHOT_PATH = "./screenshot.png"
 OBSERVATION_IMAGE_PATH = "./observation.png"
 TEMPLATE_MATCHING_THRESHOLD = 0.95
 ANIMAL_COUNT_TEMPLATE_MATCHING_THRESHOLD = 0.85
-TRAINNING_IMAGE_SIZE = 256, 75  # small
+# TRAINNING_IMAGE_SIZE = 256, 75  # small
 TRAINNING_IMAGE_SIZE = 256, 144  # big
 NUM_OF_DELIMITERS = 36
 COORDINATES_RETRY = 200, 1755
@@ -48,6 +48,7 @@ udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
 class Spec:
     def __init__(self, max_episode_steps):
         self.max_episode_steps = max_episode_steps
+        self.id = rd.randint(0, 0x7fffffff)
 
 
 class AnimalTowerDummy(gym.Env):
@@ -65,7 +66,8 @@ class AnimalTowerDummy(gym.Env):
         self.each_height = np.zeros((self.act_num,), dtype=np.uint8)
         self.blocks = np.zeros(
             (self.BLOCKS_HEIGHT_MAX, self.act_num), dtype=np.uint8)
-        self.spec = Spec(100)
+
+        self.total_step_count = 0
 
     def reset(self) -> np.ndarray:
         self.each_height = np.zeros((self.act_num,), dtype=np.uint8)
@@ -76,24 +78,27 @@ class AnimalTowerDummy(gym.Env):
         # print(self.blocks)
         self.blocks[9] = np.ones(self.act_num)
         obs = self.get_training_image()
-        cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        # cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         return obs
 
     def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
         """
         1アクション
         """
+        self.total_step_count += 1
         self.each_height[action] += 1
         self.blocks[self.BLOCKS_HEIGHT_MAX -
                     self.each_height[action] - 1, action] = 1
         # print(self.blocks)
         obs = self.get_training_image()
-        cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         done = False
         reward = 1.0
         if self.each_height[action] >= 3:
             done = True
             reward = 0.0
+        print(self.total_step_count)
+        # cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        # sleep(0.1)
         return obs, reward, done, {}
 
     def get_training_image(self):

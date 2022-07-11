@@ -2,16 +2,17 @@
 import gym
 import ray
 from ray.rllib.agents import dqn
-from env import AnimalTower, udid_list
+from env import SCREENSHOT_PATH, TRAINNING_IMAGE_SIZE, AnimalTower, AnimalTowerDummy, udid_list
 from selenium.common.exceptions import WebDriverException
 from datetime import datetime
 import json
+import numpy as np
 
 from ray.tune.registry import register_env
 
 
 def env_creator(env_config):
-    env = AnimalTower()
+    env = AnimalTowerDummy()
     return env  # return an env instance
 
 
@@ -20,6 +21,7 @@ register_env("my_env", env_creator)
 # for k, v in dqn.DEFAULT_CONFIG.copy().items():
 #     print(f"{k}: {v}")
 # assert False
+
 
 trainer = dqn.R2D2Trainer(env="my_env", config={
     "framework": "tf",
@@ -31,6 +33,7 @@ trainer = dqn.R2D2Trainer(env="my_env", config={
     },
     "target_network_update_freq": 10,  # 2500
     "model": {
+        "conv_filters": None,
         "fcnet_hiddens": [256, 256],  # [256, 256]
         "use_lstm": True,  # False
         "lstm_cell_size": 256,  # 256

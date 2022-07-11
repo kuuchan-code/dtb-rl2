@@ -10,13 +10,11 @@ from ray.rllib.utils import *
 from env import AnimalTower, AnimalTowerDummy
 
 ray.rllib.utils.check_env(AnimalTowerDummy())
-env = AnimalTowerDummy()
-# env.reset()
-# env.step(10)
+# env = AnimalTowerDummy()
 
-for i in range(10):
-    done = False
-    obs = env.reset()
-    while not done:
-        obs, reward, done, _ = env.step(random.randint(0, 21))
-        sleep(0.1)
+# for i in range(10):
+#     done = False
+#     obs = env.reset()
+#     while not done:
+#         obs, reward, done, _ = env.step(random.randint(0, 21))
+#         sleep(0.1)
