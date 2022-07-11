@@ -17,7 +17,9 @@ def main():
     fnamer1 = "log/all_6_560_result_20220710185619.csv"
     fnamer2 = "log/a2c_cnn_r4m11b_20220704124029.csv"
     df1 = pd.read_csv(fnamer1)
-    df2 = pd.read_csv(fnamer2)[:1000]
+    df2 = pd.read_csv(fnamer2)[-1000:]
+    # print(df1.shape)
+    # print(df2.shape)
     # print(df1)
     # print(df2)
     # return
