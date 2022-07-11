@@ -31,7 +31,7 @@ model = A2C.load(
 
 
 checkpoint_callback = CheckpointCallback(
-    save_freq=100, save_path="models",
+    save_freq=50, save_path="models",
     name_prefix=name_prefix
 )
 try:
