@@ -68,7 +68,7 @@ class AnimalTowerDummy(gym.Env):
         cv2.imwrite("test.png", obs)
 
     def get_training_image(self):
-        return cv2.resize(self.blocks * 255, dsize=TRAINNING_IMAGE_SIZE[::-1], interpolation=0)
+        return cv2.resize(self.blocks * 255, dsize=TRAINNING_IMAGE_SIZE[::-1], interpolation=cv2.INTER_LANCZOS4)
 
 
 class AnimalTower(gym.Env):
