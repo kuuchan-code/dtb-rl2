@@ -1,0 +1,30 @@
+try({summary(df1)})
+    animals           height      
+ Min.   : 1.000   Min.   : 1.020  
+ 1st Qu.: 3.000   1st Qu.: 2.640  
+ Median : 4.000   Median : 3.510  
+ Mean   : 4.487   Mean   : 3.833  
+ 3rd Qu.: 6.000   3rd Qu.: 4.725  
+ Max.   :20.000   Max.   :13.080  
+try({summary(df2)})
+    animals           height    
+ Min.   : 0.000   Min.   :0.00  
+ 1st Qu.: 2.000   1st Qu.:1.83  
+ Median : 3.000   Median :2.46  
+ Mean   : 3.738   Mean   :2.66  
+ 3rd Qu.: 5.000   3rd Qu.:3.45  
+ Max.   :13.000   Max.   :7.32  
+try({t.test(df1["animals"], df2["animals"])})
+
+	Welch Two Sample t-test
+
+data:  df1["animals"] and df2["animals"]
+t = 7.1794, df = 1997.7, p-value = 9.835e-13
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ 0.5443994 0.9536006
+sample estimates:
+mean of x mean of y 
+    4.487     3.738 
+
+
