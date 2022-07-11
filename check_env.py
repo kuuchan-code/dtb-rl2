@@ -9,3 +9,4 @@ from env import AnimalTower, AnimalTowerDummy
 
 # ray.rllib.utils.check_env(AnimalTower())
 env = AnimalTowerDummy()
+env.reset()
