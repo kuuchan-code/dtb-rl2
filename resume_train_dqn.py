@@ -9,6 +9,7 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from env import AnimalTower
 from datetime import datetime
 from selenium.common.exceptions import WebDriverException
+import argparse
 
 # 識別子
 name_prefix = "_dqn_cnn_r4m11b_hh"
@@ -19,8 +20,7 @@ now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
 print(f"Load {model_path}")
 
-# udidはメルカリで買った黒いやつ
-env = AnimalTower(udid="790908812299", log_prefix=name_prefix, x8_enabled=True)
+env = AnimalTower(udid="CB512C5QDQ", log_prefix=name_prefix, x8_enabled=True)
 
 device = "auto"
 
