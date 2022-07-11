@@ -56,8 +56,8 @@ class AnimalTowerDummy(gym.Env):
         self.observation_space = Box(
             low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
+        self.each_height = np.zeros((self.act_num,))
         self.blocks = np.zeros((10, self.act_num))
-        print(self.blocks)
 
     def reset(self):
         pass
