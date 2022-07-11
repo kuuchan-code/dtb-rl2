@@ -5,6 +5,7 @@
 """
 import ray
 from ray.rllib.utils import *
-from env import AnimalTower
+from env import AnimalTower, AnimalTowerDummy
 
-ray.rllib.utils.check_env(AnimalTower())
+# ray.rllib.utils.check_env(AnimalTower())
+env = AnimalTowerDummy()

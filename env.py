@@ -8,6 +8,7 @@ from time import sleep, time
 import random as rd
 import os
 import gym
+from gym.spaces import Discrete, Box
 import numpy as np
 import cv2
 from appium import webdriver
@@ -42,6 +43,24 @@ udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
 # 園田, Android5
 # udid_list = ["CB512C5QDQ", "482707805697"]
 # udid_list = ["353010080451240", "CB512C5QDQ"]
+
+
+class AnimalTowerDummy(gym.Env):
+    """
+    ダミー環境でテストしたい
+    """
+
+    def __init__(self):
+        self.act_num = 22
+        self.action_space = Discrete(self.act_num)
+        self.observation_space = Box(
+            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
+        self.reward_range = [0.0, 1.0]
+        self.blocks = np.zeros((10, self.act_num))
+        print(self.blocks)
+
+    def reset(self):
+        pass
 
 
 class AnimalTower(gym.Env):
