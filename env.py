@@ -85,8 +85,8 @@ class AnimalTowerDummy(gym.Env):
         1アクション
         """
         self.total_step_count += 1
-        x = np.clip(round(np.random.normal(action, 3.0)), 0, self.act_num - 1)
-        print(action, x)
+        x = np.clip(round(np.random.normal(action, 1.0)), 0, self.act_num - 1)
+        # print(action, x)
         self.each_height[x] += 1
 
         done = False
@@ -95,7 +95,7 @@ class AnimalTowerDummy(gym.Env):
             self.blocks[self.BLOCKS_HEIGHT_MAX -
                         self.each_height[x] - 1, x] = 1
             # print(self.blocks)
-            if self.each_height[x] >= 3:
+            if self.each_height[x] >= self.BLOCKS_HEIGHT_MAX - 1:
                 done = True
                 reward = 0.0
         else:
