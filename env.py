@@ -48,6 +48,7 @@ class AnimalTowerDummy(gym.Env):
     """
     BLOCKS_HEIGHT_MAX = 10
     HOLE_WIDTH = 2
+    FALL_RATE = 0.95
 
     def __init__(self, debug=False):
         self.debug = debug
@@ -85,7 +86,7 @@ class AnimalTowerDummy(gym.Env):
         1アクション
         """
         self.total_step_count += 1
-        x = np.clip(round(np.random.normal(action, 1.0)), 0, self.act_num - 1)
+        x = np.clip(round(rd.normalvariate(action, 1.0)), 0, self.act_num - 1)
         # print(action, x)
         self.each_height[x] += 1
 
@@ -95,7 +96,12 @@ class AnimalTowerDummy(gym.Env):
             self.blocks[self.BLOCKS_HEIGHT_MAX -
                         self.each_height[x] - 1, x] = 1
             # print(self.blocks)
+            # print(np.power(self.FALL_RATE, self.each_height[x] - 1))
             if self.each_height[x] >= self.BLOCKS_HEIGHT_MAX - 1:
+                done = True
+                reward = 0.0
+            # 積むほど落下率UP
+            elif rd.random() >= np.power(self.FALL_RATE, self.each_height[x] - 1):
                 done = True
                 reward = 0.0
         else:
@@ -105,7 +111,7 @@ class AnimalTowerDummy(gym.Env):
 
         if self.debug:
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-            print(self.total_step_count)
+            print(f"Step({self.total_step_count})")
             sleep(0.1)
         return obs, reward, done, {}
 
