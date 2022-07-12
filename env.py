@@ -47,6 +47,7 @@ class AnimalTowerDummy(gym.Env):
     ダミー環境でテストしたい
     """
     BLOCKS_HEIGHT_MAX = 10
+    HOLE_WIDTH = 2
 
     def __init__(self, debug=False):
         self.debug = debug
@@ -62,13 +63,17 @@ class AnimalTowerDummy(gym.Env):
         self.total_step_count = 0
 
     def reset(self) -> np.ndarray:
+        """
+        初期化
+        """
         self.each_height = np.zeros((self.act_num,), dtype=np.uint8)
         self.blocks = np.zeros(
             (self.BLOCKS_HEIGHT_MAX, self.act_num), dtype=np.uint8)
         # self.blocks = np.random.randint(
         #     0, 2, (10, self.act_num), dtype=np.uint8)
         # print(self.blocks)
-        self.blocks[9] = np.ones(self.act_num)
+        self.blocks[self.BLOCKS_HEIGHT_MAX -
+                    1][self.HOLE_WIDTH:-self.HOLE_WIDTH] = np.ones(self.act_num - self.HOLE_WIDTH*2)
         obs = self.get_training_image()
         if self.debug:
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
@@ -80,19 +85,25 @@ class AnimalTowerDummy(gym.Env):
         1アクション
         """
         self.total_step_count += 1
-        self.each_height[action] += 1
-        self.blocks[self.BLOCKS_HEIGHT_MAX -
-                    self.each_height[action] - 1, action] = 1
-        # print(self.blocks)
-        obs = self.get_training_image()
+        x = action
+        self.each_height[x] += 1
+
         done = False
         reward = 1.0
-        if self.each_height[action] >= 3:
+        if self.HOLE_WIDTH <= x and x < self.act_num - self.HOLE_WIDTH:
+            self.blocks[self.BLOCKS_HEIGHT_MAX -
+                        self.each_height[x] - 1, x] = 1
+            # print(self.blocks)
+            if self.each_height[x] >= 3:
+                done = True
+                reward = 0.0
+        else:
             done = True
             reward = 0.0
-        print(self.total_step_count)
+        obs = self.get_training_image()
 
         if self.debug:
+            print(self.total_step_count)
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
             sleep(0.1)
         return obs, reward, done, {}

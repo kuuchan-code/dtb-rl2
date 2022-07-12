@@ -18,4 +18,5 @@ for i in range(10):
     env.reset()
     done = False
     while not done:
-        obs, reward, done, _ = env.step(10)
+        obs, reward, done, _ = env.step(19)
+        print(obs.shape, reward, done)
