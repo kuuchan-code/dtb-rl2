@@ -37,9 +37,10 @@ if args.model == "DQN":
         replay_buffer_class=None, optimize_memory_usage=True
     )
 elif args.model == "A2C":
-    name_prefix = "_a2c_cnn_r4m11b_color"
+    # name_prefix = "_a2c_cnn_r4m11b_color"
+    name_prefix = "a2c_dummy"
 
-    env = AnimalTowerDummy(debug=True)
+    env = AnimalTowerDummy(debug=False)
     # env = AnimalTower(udid="790908812299",
     #                   log_prefix=name_prefix, x8_enabled=True)
 
@@ -49,7 +50,7 @@ else:
 
 # 多分共通?
 checkpoint_callback = CheckpointCallback(
-    save_freq=100, save_path="models",
+    save_freq=1000, save_path="models",
     name_prefix=name_prefix
 )
 
