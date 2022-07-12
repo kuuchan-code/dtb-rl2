@@ -4,9 +4,10 @@
 """
 import glob
 import os
+from syslog import LOG_PERROR
 from stable_baselines3 import A2C, DQN
 from stable_baselines3.common.callbacks import CheckpointCallback
-from env import AnimalTower
+from env import AnimalTower, AnimalTowerDummy
 from selenium.common.exceptions import WebDriverException
 import json
 import argparse
@@ -35,6 +36,12 @@ if args.model == "DQN":
         learning_starts=500, batch_size=32, tau=0.5, gamma=0.999, train_freq=(10, "episode"),
         replay_buffer_class=None, optimize_memory_usage=True
     )
+elif args.model == "A2C":
+    name_prefix = "_a2c_cnn_r4m11b_color"
+
+    env = AnimalTowerDummy()
+
+    model = A2C(policy="CnnPolicy", env=env)
 else:
     exit(-1)
 

@@ -63,7 +63,7 @@ class AnimalTowerDummy(gym.Env):
         self.action_space = Discrete(self.act_num)
         # shape = TRAINNING_IMAGE_SIZE[0] * TRAINNING_IMAGE_SIZE[1]
         self.observation_space = Box(
-            low=0, high=255, shape=(3, *TRAINNING_IMAGE_SIZE), dtype=np.uint8)
+            low=0, high=255, shape=(*TRAINNING_IMAGE_SIZE, 3), dtype=np.uint8)
         self.reward_range = [-1.0, 1.0]
         self.each_height = np.zeros((self.act_num,), dtype=np.uint8)
         self.blocks = np.zeros(
@@ -102,8 +102,8 @@ class AnimalTowerDummy(gym.Env):
             done = True
             reward = 1.0
         # print(self.total_step_count)
-        # cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-        # sleep(0.1)
+        cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        sleep(0.1)
         return obs, reward, done, {}
 
     def get_training_image(self):
