@@ -25,7 +25,7 @@ trainer = ApexTrainer(env="my_env", config={
     "exploration_config": {"epsilon_timesteps": 10}
 })
 
-trainer.restore("~/ray_results/ApexTrainer_my_env_2022-07-12_01-57-00qk8uhjak/checkpoint_000013/")
+trainer.restore("~/ray_results/ApexTrainer_my_env_2022-07-12_01-57-00qk8uhjak/checkpoint_000013/checkpoint-13")
 
 for i in range(100):
     print(trainer.train())
