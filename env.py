@@ -85,7 +85,8 @@ class AnimalTowerDummy(gym.Env):
         1アクション
         """
         self.total_step_count += 1
-        x = action
+        x = np.clip(round(np.random.normal(action, 3.0)), 0, self.act_num - 1)
+        print(action, x)
         self.each_height[x] += 1
 
         done = False
@@ -103,8 +104,8 @@ class AnimalTowerDummy(gym.Env):
         obs = self.get_training_image()
 
         if self.debug:
-            print(self.total_step_count)
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+            print(self.total_step_count)
             sleep(0.1)
         return obs, reward, done, {}
 
