@@ -9,6 +9,7 @@ from time import sleep, time
 import random as rd
 import os
 import gym
+from gym.spaces import Discrete, Box
 import numpy as np
 import cv2
 from appium import webdriver
@@ -39,6 +40,60 @@ udid_list = ["P3PDU18321001333", "353477091491152", "353010080451240"]
 # 園田, Android5
 # udid_list = ["CB512C5QDQ", "482707805697"]
 # udid_list = ["353010080451240", "CB512C5QDQ"]
+
+
+class AnimalTowerDummy(gym.Env):
+    """
+    ダミー環境でテストしたい
+    """
+    BLOCKS_HEIGHT_MAX = 10
+
+    def __init__(self):
+        self.act_num = 22
+        self.action_space = Discrete(self.act_num)
+        self.observation_space = Box(
+            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
+        self.reward_range = [0.0, 1.0]
+        self.each_height = np.zeros((self.act_num,), dtype=np.uint8)
+        self.blocks = np.zeros(
+            (self.BLOCKS_HEIGHT_MAX, self.act_num), dtype=np.uint8)
+
+        self.total_step_count = 0
+
+    def reset(self) -> np.ndarray:
+        self.each_height = np.zeros((self.act_num,), dtype=np.uint8)
+        self.blocks = np.zeros(
+            (self.BLOCKS_HEIGHT_MAX, self.act_num), dtype=np.uint8)
+        # self.blocks = np.random.randint(
+        #     0, 2, (10, self.act_num), dtype=np.uint8)
+        # print(self.blocks)
+        self.blocks[9] = np.ones(self.act_num)
+        obs = self.get_training_image()
+        # cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        return obs
+
+    def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
+        """
+        1アクション
+        """
+        self.total_step_count += 1
+        self.each_height[action] += 1
+        self.blocks[self.BLOCKS_HEIGHT_MAX -
+                    self.each_height[action] - 1, action] = 1
+        # print(self.blocks)
+        obs = self.get_training_image()
+        done = False
+        reward = 1.0
+        if self.each_height[action] >= 3:
+            done = True
+            reward = 0.0
+        print(self.total_step_count)
+        # cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        # sleep(0.1)
+        return obs, reward, done, {}
+
+    def get_training_image(self):
+        return cv2.resize(self.blocks * 255, dsize=TRAINNING_IMAGE_SIZE[::-1], interpolation=cv2.INTER_LANCZOS4)
 
 
 class AnimalTower(gym.Env):

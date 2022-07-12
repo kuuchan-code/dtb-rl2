@@ -11,4 +11,5 @@ from env import AnimalTower, AnimalTowerDummy
 
 
 env = AnimalTowerDummy()
+
 env.reset()
