@@ -44,18 +44,19 @@ elif args.model == "A2C":
     # env = AnimalTower(udid="790908812299",
     #                   log_prefix=name_prefix, x8_enabled=True)
 
-    model = A2C(policy="CnnPolicy", env=env, verbose=2)
+    model = A2C(policy="CnnPolicy", env=env, verbose=2,
+                tensorboard_log="tensorboard", device="auto")
 else:
     exit(-1)
 
 # 多分共通?
 checkpoint_callback = CheckpointCallback(
-    save_freq=1000, save_path="models",
+    save_freq=50000, save_path="models",
     name_prefix=name_prefix
 )
 
 try:
-    model.learn(total_timesteps=20000, callback=[checkpoint_callback])
+    model.learn(total_timesteps=1000000, callback=[checkpoint_callback])
 except WebDriverException as e:
     print("接続切れ?")
     raise e
