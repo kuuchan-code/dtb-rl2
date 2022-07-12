@@ -118,7 +118,7 @@ class AnimalTower(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, cfg):
+    def __init__(self, udid=None):
         rotate = [0, 6]
         move = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
         self.actions = np.array(list(itertools.product(rotate, move)))
@@ -132,16 +132,16 @@ class AnimalTower(gym.Env):
         self.prev_animal_count = None
 
         # udidを選択
-        if os.path.exists("idx.pickle"):
-            with open("idx.pickle", "rb") as pickle_f:
-                i = pickle.load(pickle_f)
-        else:
-            i = 0
-        udid = udid_list[i]
-        with open("idx.pickle", "wb") as pickle_f:
-            pickle.dump((i + 1) % len(udid_list), pickle_f)
-        sleep(rd.random() * 10)
-        print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
+        # if os.path.exists("idx.pickle"):
+        #     with open("idx.pickle", "rb") as pickle_f:
+        #         i = pickle.load(pickle_f)
+        # else:
+        #     i = 0
+        # udid = udid_list[i]
+        # with open("idx.pickle", "wb") as pickle_f:
+        #     pickle.dump((i + 1) % len(udid_list), pickle_f)
+        # sleep(rd.random() * 10)
+        # print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
         self.device = AnimalTowerDevice(udid)
 
         self.total_step_count = 0

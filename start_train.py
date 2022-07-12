@@ -40,8 +40,9 @@ elif args.model == "A2C":
     name_prefix = "_a2c_cnn_r4m11b_color"
 
     env = AnimalTowerDummy()
+    env = AnimalTower(udid="790908812299", log_prefix=name_prefix)
 
-    model = A2C(policy="CnnPolicy", env=env)
+    model = A2C(policy="CnnPolicy", env=env, verbose=2)
 else:
     exit(-1)
 
