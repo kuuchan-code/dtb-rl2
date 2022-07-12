@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-import gym, ray
 from ray.rllib.agents.dqn import ApexTrainer
 from env import AnimalTower
-from selenium.common.exceptions import WebDriverException
-from datetime import datetime
-import json
 
 from ray.tune.registry import register_env
+
 
 
 def env_creator(env_config):
@@ -15,23 +12,21 @@ def env_creator(env_config):
 
 register_env("my_env", env_creator)
 
-# for k, v in dqn.DEFAULT_CONFIG.copy().items():
-#     print(f"{k}: {v}")
-# assert False
-
 trainer = ApexTrainer(env="my_env", config={
     "framework": "tf",
-    "target_network_update_freq": 100,
-    "num_workers": 2,
-    "learning_starts": 100
+    # R2D2 settings.
+    "num_workers": 1,
+    "target_network_update_freq": 500,
+    "disable_env_checking": True,
+    "timesteps_per_iteration": 25,
+    "compress_observations": True,
+    "learning_starts": 50,
+    "train_batch_size": 64,
+    "exploration_config": {"epsilon_timesteps": 10}
 })
 
-
-# trainer.train()
-# with open("/home/ray/dtb-rl2/a.txt", "w") as f:
-#     print("あ", file=f)
-for i in range(10000):
+for i in range(100):
     print(trainer.train())
-    if i % 100 == 0:
+    if i % 4 == 0:
        checkpoint = trainer.save()
        print("checkpoint saved at", checkpoint)
