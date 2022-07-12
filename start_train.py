@@ -7,7 +7,7 @@ import os
 from syslog import LOG_PERROR
 from stable_baselines3 import A2C, DQN
 from stable_baselines3.common.callbacks import CheckpointCallback
-from env import AnimalTower, AnimalTowerDummy
+from env import AnimalTower
 from selenium.common.exceptions import WebDriverException
 import json
 import argparse
@@ -39,8 +39,9 @@ if args.model == "DQN":
 elif args.model == "A2C":
     name_prefix = "_a2c_cnn_r4m11b_color"
 
-    env = AnimalTowerDummy()
-    env = AnimalTower(udid="790908812299", log_prefix=name_prefix)
+    # env = AnimalTowerDummy()
+    env = AnimalTower(udid="790908812299",
+                      log_prefix=name_prefix, x8_enabled=True)
 
     model = A2C(policy="CnnPolicy", env=env, verbose=2)
 else:
@@ -53,7 +54,7 @@ checkpoint_callback = CheckpointCallback(
 )
 
 try:
-    model.learn(total_timesteps=10000, callback=[checkpoint_callback])
+    model.learn(total_timesteps=20000, callback=[checkpoint_callback])
 except WebDriverException as e:
     print("接続切れ?")
     raise e

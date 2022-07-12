@@ -14,7 +14,7 @@ print(f"Load {model_path}")
 
 # env = AnimalTower(udid="482707805697",
 #                   log_prefix=name_prefix, x8_enabled=False)
-env = AnimalTowerDummy()
+# env = AnimalTowerDummy()
 # model = PPO.load(path="ppo_logs/rotete_move_12_3200_steps", env=env)
 model = A2C.load(path=model_path, env=env)
 
