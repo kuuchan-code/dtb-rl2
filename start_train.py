@@ -15,7 +15,7 @@ register_env("my_env", env_creator)
 trainer = ApexTrainer(env="my_env", config={
     "framework": "tf",
     # R2D2 settings.
-    "num_workers": 1,
+    "num_workers": 3,
     "target_network_update_freq": 500,
     "disable_env_checking": True,
     "timesteps_per_iteration": 25,
