@@ -48,7 +48,8 @@ class AnimalTowerDummy(gym.Env):
     """
     BLOCKS_HEIGHT_MAX = 10
 
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.debug = debug
         self.act_num = 22
         self.action_space = Discrete(self.act_num)
         self.observation_space = Box(
@@ -69,7 +70,9 @@ class AnimalTowerDummy(gym.Env):
         # print(self.blocks)
         self.blocks[9] = np.ones(self.act_num)
         obs = self.get_training_image()
-        # cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+        if self.debug:
+            cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+            sleep(0.1)
         return obs
 
     def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
@@ -88,8 +91,10 @@ class AnimalTowerDummy(gym.Env):
             done = True
             reward = 0.0
         print(self.total_step_count)
-        # cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-        # sleep(0.1)
+
+        if self.debug:
+            cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+            sleep(0.1)
         return obs, reward, done, {}
 
     def get_training_image(self):

@@ -7,7 +7,7 @@ import os
 from syslog import LOG_PERROR
 from stable_baselines3 import A2C, DQN
 from stable_baselines3.common.callbacks import CheckpointCallback
-from env import AnimalTower
+from env import AnimalTower, AnimalTowerDummy
 from selenium.common.exceptions import WebDriverException
 import json
 import argparse
@@ -39,9 +39,9 @@ if args.model == "DQN":
 elif args.model == "A2C":
     name_prefix = "_a2c_cnn_r4m11b_color"
 
-    # env = AnimalTowerDummy()
-    env = AnimalTower(udid="790908812299",
-                      log_prefix=name_prefix, x8_enabled=True)
+    env = AnimalTowerDummy(debug=True)
+    # env = AnimalTower(udid="790908812299",
+    #                   log_prefix=name_prefix, x8_enabled=True)
 
     model = A2C(policy="CnnPolicy", env=env, verbose=2)
 else:
