@@ -8,6 +8,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 class RangeCheck(object):
     def __init__(self, low_limit=None, high_limit=None, vtype="integer"):
         self.min = low_limit
@@ -60,6 +61,7 @@ def main(fnamer, move_mean_length):
     # ax.plot(x, y1[:-move_mean_length+1])
     ax.plot(x, y1_conv, label="animals")
     ax.plot(x, y2_conv, label="height")
+    ax.set_title(f"n={move_mean_length}")
     ax.set_xlabel("episode")
     # ax.set_ylabel("animals, height")
     ax.legend()

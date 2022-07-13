@@ -14,6 +14,7 @@ name_prefix = "_a2c_cnn_r4m11b"
 
 # 最新のモデルを読み込むように
 model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
+# model_path = "models/a2c_cnn_r4m11b_54550_steps.zip"
 print(f"Load {model_path}")
 
 env = AnimalTower(udid="482707805697",
@@ -31,7 +32,7 @@ model = A2C.load(
 
 
 checkpoint_callback = CheckpointCallback(
-    save_freq=100, save_path="models",
+    save_freq=50, save_path="models",
     name_prefix=name_prefix
 )
 try:
