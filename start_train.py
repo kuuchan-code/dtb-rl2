@@ -53,7 +53,7 @@ checkpoint_callback = CheckpointCallback(
 )
 
 try:
-    model.learn(total_timesteps=10000, callback=[checkpoint_callback])
+    model.learn(total_timesteps=20000, callback=[checkpoint_callback])
 except WebDriverException as e:
     print("接続切れ?")
     raise e
