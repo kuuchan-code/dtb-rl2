@@ -13,8 +13,8 @@ from selenium.common.exceptions import WebDriverException
 name_prefix = "_a2c_cnn_r4m11b"
 
 # 最新のモデルを読み込むように
-# model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
-model_path = "models/a2c_cnn_r4m11b_54550_steps.zip"
+model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
+# model_path = "models/a2c_cnn_r4m11b_54550_steps.zip"
 print(f"Load {model_path}")
 
 env = AnimalTower(udid="482707805697",
