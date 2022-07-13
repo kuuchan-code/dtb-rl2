@@ -16,11 +16,15 @@ name_prefix = "_dqn_cnn_r4m11b"
 now_str = datetime.now().strftime("%Y%m%d%H%M%S")
 
 # 最新のモデルを読み込むように
-model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
+model_path = max([p for p in glob.glob("models/*.zip")
+                 if "dqn" in p], key=os.path.getctime)
 print(f"Load {model_path}")
 
+udid = "CB512C5QDQ"
+# udid = "790908812299"
+
 # udidはメルカリで買った黒いやつ
-env = AnimalTower(udid="790908812299", log_prefix=name_prefix, x8_enabled=True)
+env = AnimalTower(udid=udid, log_prefix=name_prefix, x8_enabled=True)
 
 device = "auto"
 
