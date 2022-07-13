@@ -47,12 +47,15 @@ class AnimalTowerDummy(gym.Env):
     ダミー環境でテストしたい
     """
     BLOCKS_HEIGHT_MAX = 10
+    HOLE_WIDTH = 2
+    FALL_RATE = 0.95
 
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.debug = debug
         self.act_num = 22
         self.action_space = Discrete(self.act_num)
         self.observation_space = Box(
-            low=0, high=255, shape=TRAINNING_IMAGE_SIZE, dtype=np.uint8)
+            low=0, high=255, shape=(*TRAINNING_IMAGE_SIZE, 1), dtype=np.uint8)
         self.reward_range = [0.0, 1.0]
         self.each_height = np.zeros((self.act_num,), dtype=np.uint8)
         self.blocks = np.zeros(
@@ -61,36 +64,56 @@ class AnimalTowerDummy(gym.Env):
         self.total_step_count = 0
 
     def reset(self) -> np.ndarray:
+        """
+        初期化
+        """
         self.each_height = np.zeros((self.act_num,), dtype=np.uint8)
         self.blocks = np.zeros(
             (self.BLOCKS_HEIGHT_MAX, self.act_num), dtype=np.uint8)
         # self.blocks = np.random.randint(
         #     0, 2, (10, self.act_num), dtype=np.uint8)
         # print(self.blocks)
-        self.blocks[9] = np.ones(self.act_num)
+        self.blocks[self.BLOCKS_HEIGHT_MAX -
+                    1][self.HOLE_WIDTH:-self.HOLE_WIDTH] = np.ones(self.act_num - self.HOLE_WIDTH*2)
         obs = self.get_training_image()
-        # cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-        return obs
+        if self.debug:
+            cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+            sleep(0.1)
+        return np.reshape(obs, (*TRAINNING_IMAGE_SIZE, 1))
 
     def step(self, action) -> tuple[np.ndarray, float, bool, dict]:
         """
         1アクション
         """
         self.total_step_count += 1
-        self.each_height[action] += 1
-        self.blocks[self.BLOCKS_HEIGHT_MAX -
-                    self.each_height[action] - 1, action] = 1
-        # print(self.blocks)
-        obs = self.get_training_image()
+        x = np.clip(round(rd.normalvariate(action, 1.0)), 0, self.act_num - 1)
+        # print(action, x)
+        self.each_height[x] += 1
+
         done = False
         reward = 1.0
-        if self.each_height[action] >= 3:
+        if self.HOLE_WIDTH <= x and x < self.act_num - self.HOLE_WIDTH:
+            self.blocks[self.BLOCKS_HEIGHT_MAX -
+                        self.each_height[x] - 1, x] = 1
+            # print(self.blocks)
+            # print(np.power(self.FALL_RATE, self.each_height[x] - 1))
+            if self.each_height[x] >= self.BLOCKS_HEIGHT_MAX - 1:
+                done = True
+                reward = 0.0
+            # 積むほど落下率UP
+            elif rd.random() >= np.power(self.FALL_RATE, self.each_height[x] - 1):
+                done = True
+                reward = 0.0
+        else:
             done = True
             reward = 0.0
-        print(self.total_step_count)
-        # cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-        # sleep(0.1)
-        return obs, reward, done, {}
+        obs = self.get_training_image()
+
+        if self.debug:
+            cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
+            print(f"Step({self.total_step_count})")
+            sleep(0.1)
+        return np.reshape(obs, (*TRAINNING_IMAGE_SIZE, 1)), reward, done, {}
 
     def get_training_image(self):
         return cv2.resize(self.blocks * 255, dsize=TRAINNING_IMAGE_SIZE[::-1], interpolation=cv2.INTER_LANCZOS4)
