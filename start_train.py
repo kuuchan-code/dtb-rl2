@@ -38,7 +38,7 @@ if args.model == "DQN":
     )
 elif args.model == "A2C":
     # name_prefix = "_a2c_cnn_r4m11b_color"
-    name_prefix = "a2c_dummy"
+    name_prefix = "_a2c_dummy"
 
     env = AnimalTowerDummy(debug=False)
     # env = AnimalTower(udid="790908812299",
