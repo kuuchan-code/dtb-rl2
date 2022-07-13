@@ -4,7 +4,7 @@
 """
 import glob
 import os
-from stable_baselines3 import A2C, DQN
+from stable_baselines3 import A2C, DQN, PPO
 from stable_baselines3.common.callbacks import CheckpointCallback
 from env import AnimalTower
 from selenium.common.exceptions import WebDriverException
@@ -35,6 +35,14 @@ if args.model == "DQN":
         learning_starts=500, batch_size=32, tau=0.5, gamma=0.999, train_freq=(10, "episode"),
         replay_buffer_class=None, optimize_memory_usage=True
     )
+elif args.model == "PPO":
+    name_prefix = "_ppo_cnn_r4m11b"
+
+    env = AnimalTower(udid="790908812299",
+                      log_prefix=name_prefix, x8_enabled=True)
+
+    model = PPO(policy="CnnPolicy", env=env, learning_rate=0.001, n_steps=128,
+                batch_size=32, n_epochs=5, gamma=0.99, verbose=2, device="auto")
 else:
     exit(-1)
 
