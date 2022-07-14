@@ -1,4 +1,5 @@
 opencv-python
 Appium-Python-Client
+stable-baselines3
 pyper
 matplotlib

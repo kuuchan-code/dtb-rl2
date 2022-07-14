@@ -18,6 +18,9 @@ parser.add_argument("model", help="モデル")
 
 args = parser.parse_args()
 
+udid = "482707805697"
+device = "cpu"
+
 
 if args.model == "DQN":
     name_prefix = "_dqn_cnn_r4m11b"
@@ -38,11 +41,11 @@ if args.model == "DQN":
 elif args.model == "PPO":
     name_prefix = "_ppo_cnn_r4m11b"
 
-    env = AnimalTower(udid="790908812299",
+    env = AnimalTower(udid=udid,
                       log_prefix=name_prefix, x8_enabled=True)
 
-    model = PPO(policy="CnnPolicy", env=env, learning_rate=0.001, n_steps=128,
-                batch_size=32, n_epochs=5, gamma=0.99, verbose=2, device="auto")
+    model = PPO(policy="CnnPolicy", env=env, learning_rate=0.001, n_steps=256,
+                batch_size=32, n_epochs=5, gamma=0.99, verbose=2, device=device)
 else:
     exit(-1)
 
