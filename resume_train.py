@@ -16,8 +16,8 @@ parser.add_argument("model", help="モデル")
 
 args = parser.parse_args()
 
-# udid = "790908812299"
-udid = "482707805697"
+udid = "790908812299"
+# udid = "482707805697"
 # device = "auto"
 device = "cpu"
 x8_enabled = False
