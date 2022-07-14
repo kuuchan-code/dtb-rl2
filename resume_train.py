@@ -20,7 +20,7 @@ udid = "790908812299"
 # udid = "482707805697"
 # device = "auto"
 device = "cpu"
-x8_enabled = False
+x8_enabled = True
 
 if args.model == "PPO":
     name_prefix = "_ppo_cnn_r4m11b"
