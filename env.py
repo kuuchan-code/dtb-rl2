@@ -210,7 +210,7 @@ class AnimalTowerDevice():
             udid = "any"
         else:
             caps["appium:udid"] = udid
-        print(caps)
+        # print(caps)
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
         self.screenshot_path = f"./screenshot_{udid}.png"
