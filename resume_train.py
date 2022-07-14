@@ -16,9 +16,11 @@ parser.add_argument("model", help="モデル")
 
 args = parser.parse_args()
 
-udid = "790908812299"
+# udid = "790908812299"
+udid = "482707805697"
 # device = "auto"
 device = "cpu"
+x8_enabled = False
 
 if args.model == "PPO":
     name_prefix = "_ppo_cnn_r4m11b"
@@ -26,7 +28,7 @@ if args.model == "PPO":
 
     print(f"Load {model_path}")
 
-    env = AnimalTower(udid=udid)
+    env = AnimalTower(udid=udid, log_prefix=name_prefix, x8_enabled=x8_enabled)
 
     model = PPO.load(
         path=model_path,
@@ -41,15 +43,13 @@ elif args.model == "A2C":
     name_prefix = "_a2c_cnn_r4m11b"
 
     # 最新のモデルを読み込むように
-    model_path = max(glob.glob("models/*.zip"), key=os.path.getctime)
+    model_path = max(glob.glob("models/*a2c*.zip"), key=os.path.getctime)
     # model_path = "models/a2c_cnn_r4m11b_54550_steps.zip"
     print(f"Load {model_path}")
 
-    env = AnimalTower(udid="482707805697",
-                    log_prefix=name_prefix, x8_enabled=False)
+    env = AnimalTower(udid=udid,
+                    log_prefix=name_prefix, x8_enabled=x8_enabled)
 
-    # device = "cpu"
-    device = "auto"
 
     model = A2C.load(
         path=model_path,
@@ -63,6 +63,7 @@ checkpoint_callback = CheckpointCallback(
     save_freq=100, save_path="models",
     name_prefix=name_prefix
 )
+
 try:
     model.learn(total_timesteps=20000, callback=[checkpoint_callback])
 except WebDriverException as e:
