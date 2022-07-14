@@ -15,11 +15,14 @@ import argparse
 parser = argparse.ArgumentParser(description="訓練開始")
 
 parser.add_argument("model", help="モデル")
+parser.add_argument("-s", "--udid", help="udid")
 
 args = parser.parse_args()
 
-udid = "482707805697"
-device = "cpu"
+# udid = "482707805697"
+# udid = "790908812299"
+# device = "cpu"
+device = "auto"
 
 
 if args.model == "DQN":
@@ -39,12 +42,15 @@ if args.model == "DQN":
         replay_buffer_class=None, optimize_memory_usage=True
     )
 elif args.model == "PPO":
-    name_prefix = "_ppo_cnn_r4m11b"
+    learning_rate = 0.001
+    n_steps = 512
 
-    env = AnimalTower(udid=udid,
+    name_prefix = f"_ppo_cnn_r4m11b_lr{learning_rate}_ns{n_steps}"
+
+    env = AnimalTower(udid=args.udid,
                       log_prefix=name_prefix, x8_enabled=True)
 
-    model = PPO(policy="CnnPolicy", env=env, learning_rate=0.001, n_steps=256,
+    model = PPO(policy="CnnPolicy", env=env, learning_rate=learning_rate, n_steps=n_steps,
                 batch_size=32, n_epochs=5, gamma=0.99, verbose=2, device=device)
 else:
     exit(-1)
