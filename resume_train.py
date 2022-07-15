@@ -80,3 +80,5 @@ except WebDriverException as e:
 except KeyboardInterrupt as e:
     print("キーボード割り込み")
     raise e
+finally:
+    model.save("log/end.zip")
