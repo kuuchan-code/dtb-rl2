@@ -26,8 +26,8 @@ x8_enabled = True
 
 if args.model == "PPO":
     # name_prefix = "_ppo_cnn_r4m11b"
-    model_path = max(glob.glob("models/*ppo*.zip"), key=os.path.getctime)
-    mg = re.findall(f'models/(.+)_\d+_steps.zip', model_path)
+    model_path = max(glob.glob("models/*ppo*"), key=os.path.getctime)
+    mg = re.findall(f'models/(.+)_\d+_steps', model_path)
     name_prefix = f"_{mg[0]}"
 
     # print(name_prefix)
@@ -81,4 +81,4 @@ except KeyboardInterrupt as e:
     print("キーボード割り込み")
     raise e
 finally:
-    model.save("log/end.zip")
+    model.save("models/_end.zip")
