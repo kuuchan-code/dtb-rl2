@@ -60,19 +60,6 @@ class AnimalTower(gym.Env):
         self.prev_height = None
         self.prev_animal_count = None
 
-        # udidを選択
-        # if os.path.exists("idx.pickle"):
-        #     with open("idx.pickle", "rb") as pickle_f:
-        #         i = pickle.load(pickle_f)
-        # else:
-        #     i = 0
-        # udid = udid_list[i]
-        # with open("idx.pickle", "wb") as pickle_f:
-        #     pickle.dump((i + 1) % len(udid_list), pickle_f)
-        # udid = "790908812299"
-        # udid = "CB512C5QDQ"
-        # udid = "482707805697"
-        sleep(rd.random() * 10)
         print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
         self.device = AnimalTowerDevice(udid, x8_enabled)
 
@@ -223,6 +210,7 @@ class AnimalTowerDevice():
             udid = "any"
         else:
             caps["appium:udid"] = udid
+        # print(caps)
         self.driver = webdriver.Remote(
             "http://localhost:4723/wd/hub", caps)
         self.screenshot_path = f"./screenshot_{udid}.png"
