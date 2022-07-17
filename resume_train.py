@@ -44,6 +44,18 @@ if args.model == "PPO":
         device=device,
         print_system_info=True
     )
+    # 学習率変えてみる
+    # model.learning_rate = 0.0001
+
+    print(f"policy={model.policy}")
+    print(f"learning_rate={model.learning_rate}")
+    print(f"n_steps={model.n_steps}")
+    print(f"batch_size={model.batch_size}")
+    print(f"n_epochs={model.n_epochs}")
+    print(f"gamma={model.gamma}")
+    print(f"verbose={model.verbose}")
+    print(f"device={model.device}")
+    # exit()
 
 
 elif args.model == "A2C":
@@ -71,7 +83,7 @@ elif args.model == "A2C":
 
 
 checkpoint_callback = CheckpointCallback(
-    save_freq=100, save_path="models",
+    save_freq=200, save_path="models",
     name_prefix=name_prefix
 )
 
