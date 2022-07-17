@@ -45,7 +45,7 @@ if args.model == "PPO":
         print_system_info=True
     )
     # 学習率変えてみる
-    model.learning_rate = 0.0001
+    # model.learning_rate = 0.0001
 
     print(f"policy={model.policy}")
     print(f"learning_rate={model.learning_rate}")
@@ -55,6 +55,7 @@ if args.model == "PPO":
     print(f"gamma={model.gamma}")
     print(f"verbose={model.verbose}")
     print(f"device={model.device}")
+    exit()
 
 
 elif args.model == "A2C":
