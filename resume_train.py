@@ -47,8 +47,14 @@ if args.model == "PPO":
     print(model.n_steps, model.n_epochs,
           model.learning_rate, model.batch_size, model.gamma, model.device)
     model.learning_rate = 0.0001
-    print(model.n_steps, model.n_epochs,
-          model.learning_rate, model.batch_size, model.gamma, model.device)
+    print(f"policy={model.policy}")
+    print(f"learning_rate={model.learning_rate}")
+    print(f"n_steps={model.n_steps}")
+    print(f"batch_size={model.batch_size}")
+    print(f"n_epochs={model.n_epochs}")
+    print(f"gamma={model.gamma}")
+    print(f"verbose={model.verbose}")
+    print(f"device={model.device}")
     exit()
 
 
