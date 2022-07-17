@@ -44,6 +44,12 @@ if args.model == "PPO":
         device=device,
         print_system_info=True
     )
+    print(model.n_steps, model.n_epochs,
+          model.learning_rate, model.batch_size, model.gamma, model.device)
+    model.learning_rate = 0.0001
+    print(model.n_steps, model.n_epochs,
+          model.learning_rate, model.batch_size, model.gamma, model.device)
+    exit()
 
 
 elif args.model == "A2C":
@@ -65,7 +71,6 @@ elif args.model == "A2C":
         device=device,
         print_system_info=True
     )
-    model.learning_rate = 0.0001
 
 
 checkpoint_callback = CheckpointCallback(
