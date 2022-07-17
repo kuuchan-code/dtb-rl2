@@ -80,6 +80,12 @@ elif args.model == "A2C":
         device=device,
         print_system_info=True
     )
+    print(f"policy={model.policy}")
+    print(f"learning_rate={model.learning_rate}")
+    print(f"gamma={model.gamma}")
+    print(f"verbose={model.verbose}")
+    print(f"device={model.device}")
+    exit()
 
 
 checkpoint_callback = CheckpointCallback(
