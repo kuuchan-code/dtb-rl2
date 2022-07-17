@@ -65,10 +65,11 @@ elif args.model == "A2C":
         device=device,
         print_system_info=True
     )
+    model.learning_rate = 0.0001
 
 
 checkpoint_callback = CheckpointCallback(
-    save_freq=100, save_path="models",
+    save_freq=200, save_path="models",
     name_prefix=name_prefix
 )
 
