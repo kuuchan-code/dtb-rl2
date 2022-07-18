@@ -61,12 +61,15 @@ if args.model == "PPO":
 elif args.model == "A2C":
 
     # 識別子
-    name_prefix = "_a2c_cnn_r4m11b"
+    # name_prefix = "_a2c_cnn_r4m11b"
 
     # 最新のモデルを読み込むように
     model_path = max(glob.glob("models/*a2c*.zip"), key=os.path.getctime)
+    mg = re.findall(r'models/(.+)_\d+_steps', model_path)
+    name_prefix = f"_{mg[0]}"
     # model_path = "models/a2c_cnn_r4m11b_54550_steps.zip"
     print(f"Load {model_path}")
+    print(f"name_prefix={name_prefix}")
 
     env = AnimalTower(udid=args.udid,
                       log_prefix=name_prefix, x8_enabled=x8_enabled)
@@ -77,6 +80,14 @@ elif args.model == "A2C":
         device=device,
         print_system_info=True
     )
+    model.learning_rate = 0.0001
+
+    print(f"policy={model.policy}")
+    print(f"learning_rate={model.learning_rate}")
+    print(f"gamma={model.gamma}")
+    print(f"verbose={model.verbose}")
+    print(f"device={model.device}")
+    # exit()
 
 
 checkpoint_callback = CheckpointCallback(
