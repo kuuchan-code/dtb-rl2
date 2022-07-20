@@ -55,7 +55,7 @@ if args.model == "PPO":
     print(f"gamma={model.gamma}")
     print(f"verbose={model.verbose}")
     print(f"device={model.device}")
-    exit()
+    # exit()
 
 
 elif args.model == "A2C":
@@ -91,12 +91,12 @@ elif args.model == "A2C":
 
 
 checkpoint_callback = CheckpointCallback(
-    save_freq=200, save_path="models",
+    save_freq=500, save_path="models",
     name_prefix=name_prefix
 )
 
 try:
-    model.learn(total_timesteps=20000, callback=[checkpoint_callback])
+    model.learn(total_timesteps=30000, callback=[checkpoint_callback])
 except WebDriverException as e:
     print("接続切れ?")
     raise e
