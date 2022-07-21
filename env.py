@@ -88,7 +88,7 @@ class AnimalTower(gym.Env):
         """
         self.episode_step_count = 0
         self.episode_count += 1
-        print(f"episode({self.episode_count})")
+        # print(f"episode({self.episode_count})")
         self.prev_height = None
         self.prev_animal_count = None
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
@@ -104,7 +104,7 @@ class AnimalTower(gym.Env):
             # デバッグ
             # print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
         t_1 = time()
-        print(f"リセット所要時間: {t_1 - self.t_0:4.2f}秒")
+        # print(f"リセット所要時間: {t_1 - self.t_0:4.2f}秒")
         self.t_0 = t_1
         return obs
 
@@ -112,10 +112,10 @@ class AnimalTower(gym.Env):
         """
         1アクション
         """
-        print(f"Step({self.total_step_count + 1})")
+        # print(f"Step({self.total_step_count + 1})")
         action = self.actions[action_index]
-        print(
-            f"Action({action_index}/{self.actions.shape[0]-1}), {action[0], action[1]}")
+        # print(
+        #     f"Action({action_index}/{self.actions.shape[0]-1}), {action[0], action[1]}")
         # 行動記録 (ステップと行動の添字)
         with open(self.action_log_path, "a", encoding="utf-8") as log_f:
             print(f"{self.episode_step_count},{action_index}", file=log_f)
@@ -140,9 +140,9 @@ class AnimalTower(gym.Env):
             # ループで必ず高さと動物数を取得
             height = self.device.get_height()
             animal_count = self.device.get_animal_count()
-            print(
-                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}"
-            )
+            # print(
+            #     f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}"
+            # )
             # 終端
             if self.device.is_result_screen(mag=self.device.mag[0]):
                 print("Game over")
@@ -154,7 +154,8 @@ class AnimalTower(gym.Env):
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
-                print("数値取得失敗")
+                # print("数値取得失敗")
+                pass
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
                 # 更新があっても, 煙があるかもしれないので撮り直し
@@ -162,10 +163,10 @@ class AnimalTower(gym.Env):
                     maybe_smoke = False
                     continue
                 # ついでに高さ更新を検知
-                if height > self.prev_height:
-                    print(f"Height update: {height}m")
-                else:
-                    print("No height update")
+                # if height > self.prev_height:
+                #     print(f"Height update: {height}m")
+                # else:
+                #     print("No height update")
                 reward = 1.0
                 break
             sleep(self.device.pooling_intarval)
@@ -177,10 +178,10 @@ class AnimalTower(gym.Env):
         # 共通処理
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         t_1 = time()
-        print(f"ステップ所要時間: {t_1 - self.t_0:4.2f}秒")
+        # print(f"ステップ所要時間: {t_1 - self.t_0:4.2f}秒")
         self.t_0 = t_1
-        print(f"return obs, {reward}, {done}, {{}}")
-        print("-"*NUM_OF_DELIMITERS)
+        # print(f"return obs, {reward}, {done}, {{}}")
+        # print("-"*NUM_OF_DELIMITERS)
         # baseline3のCnnPolicyの場合必要
         obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
         return obs_3d, reward, done, {}

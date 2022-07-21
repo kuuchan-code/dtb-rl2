@@ -52,7 +52,7 @@ for i in range(10):
 
 def main(fnamer: str, new_data_num: int | None):
     df = pd.read_csv(fnamer)
-    b_name = os.path.basename(fnamer).split('.', 1)[0]
+    b_name = os.path.splitext(os.path.basename(fnamer))[0]
     if new_data_num is None:
         fnamew = f"statistics/{b_name}.txt"
     else:

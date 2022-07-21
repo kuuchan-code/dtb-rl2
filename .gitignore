@@ -134,3 +134,4 @@ observation*.png
 train.csv
 *.pickle
 /screenshot*.png
+models
