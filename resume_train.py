@@ -69,7 +69,7 @@ if args.model == "PPO":
     print(f"gamma={model.gamma}")
     print(f"verbose={model.verbose}")
     print(f"device={model.device}")
-    exit()
+    # exit()
 
 
 elif args.model == "A2C":

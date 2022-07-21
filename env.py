@@ -63,7 +63,7 @@ class AnimalTower(gym.Env):
         print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
         self.device = AnimalTowerDevice(udid, x8_enabled)
         self.verbose = verbose
-        print(self.verbose)
+        # print(self.verbose)
 
         self.episode_step_count = 0
         self.total_step_count = 0
