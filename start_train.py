@@ -16,13 +16,15 @@ parser = argparse.ArgumentParser(description="訓練開始")
 
 parser.add_argument("model", help="モデル")
 parser.add_argument("-s", "--udid", help="udid")
+parser.add_argument("-d", "--device", help="device", default="auto")
 
 args = parser.parse_args()
 
 # udid = "482707805697"
 # udid = "790908812299"
+# udid = "353010080451240"
 # device = "cpu"
-device = "auto"
+# device = "auto"
 
 
 if args.model == "DQN":
@@ -43,15 +45,25 @@ if args.model == "DQN":
     )
 elif args.model == "PPO":
     learning_rate = 0.001
-    n_steps = 512
+    n_steps = 128
+    n_epochs = 10
 
-    name_prefix = f"_ppo_cnn_r4m11b_lr{learning_rate}_ns{n_steps}"
+    name_prefix = f"_ppo_cnn_r4m11b_lr{learning_rate}_ns{n_steps}_ne{n_epochs}"
 
     env = AnimalTower(udid=args.udid,
                       log_prefix=name_prefix, x8_enabled=True)
 
     model = PPO(policy="CnnPolicy", env=env, learning_rate=learning_rate, n_steps=n_steps,
-                batch_size=32, n_epochs=5, gamma=0.99, verbose=2, device=device)
+                batch_size=32, n_epochs=n_epochs, gamma=0.99, verbose=2, device=args.device)
+    
+    print(f"policy={model.policy}")
+    print(f"learning_rate={model.learning_rate}")
+    print(f"n_steps={model.n_steps}")
+    print(f"batch_size={model.batch_size}")
+    print(f"n_epochs={model.n_epochs}")
+    print(f"gamma={model.gamma}")
+    print(f"verbose={model.verbose}")
+    print(f"device={model.device}")
 else:
     exit(-1)
 
