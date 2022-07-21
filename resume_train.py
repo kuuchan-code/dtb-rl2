@@ -26,7 +26,8 @@ args = parser.parse_args()
 
 # udid = "790908812299"
 # udid = "482707805697"
-# udid = "P3PDU18321001333"
+# udid = "353010080451240" # 中古の灰色
+# udid = "P3PDU18321001333" # あさひくんの
 device = "auto"
 # device = "cpu"
 x8_enabled = True

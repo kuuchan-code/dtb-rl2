@@ -15,8 +15,13 @@ import argparse
 parser = argparse.ArgumentParser(description="訓練開始")
 
 parser.add_argument("model", help="モデル")
+parser.add_argument("--name", help="名前")
 parser.add_argument("-s", "--udid", help="udid")
 parser.add_argument("-d", "--device", help="device", default="auto")
+parser.add_argument("--env-verbose", help="詳細な出力", type=int, default=2)
+parser.add_argument("--learning-rate", help="学習率", type=float, default=0.0003)
+parser.add_argument("--n-steps", help="n_steps", type=int, default=2048)
+parser.add_argument("--n-epochs", help="n_epochs", type=int, default=10)
 
 args = parser.parse_args()
 
@@ -44,18 +49,18 @@ if args.model == "DQN":
         replay_buffer_class=None, optimize_memory_usage=True
     )
 elif args.model == "PPO":
-    learning_rate = 0.001
-    n_steps = 128
-    n_epochs = 10
+    learning_rate = args.learning_rate
+    n_steps = args.n_steps
+    n_epochs = args.n_epochs
 
     name_prefix = f"_ppo_cnn_r4m11b_lr{learning_rate}_ns{n_steps}_ne{n_epochs}"
 
     env = AnimalTower(udid=args.udid,
-                      log_prefix=name_prefix, x8_enabled=True)
+                      log_prefix=name_prefix, x8_enabled=True, verbose=args.env_verbose)
 
     model = PPO(policy="CnnPolicy", env=env, learning_rate=learning_rate, n_steps=n_steps,
-                batch_size=32, n_epochs=n_epochs, gamma=0.99, verbose=2, device=args.device)
-    
+                batch_size=64, n_epochs=n_epochs, gamma=0.99, verbose=2, device=args.device)
+
     print(f"policy={model.policy}")
     print(f"learning_rate={model.learning_rate}")
     print(f"n_steps={model.n_steps}")
@@ -69,12 +74,12 @@ else:
 
 # 多分共通?
 checkpoint_callback = CheckpointCallback(
-    save_freq=100, save_path="models",
+    save_freq=500, save_path="models",
     name_prefix=name_prefix
 )
 
 try:
-    model.learn(total_timesteps=20000, callback=[checkpoint_callback])
+    model.learn(total_timesteps=30000, callback=[checkpoint_callback])
 except WebDriverException as e:
     print("接続切れ?")
     raise e
