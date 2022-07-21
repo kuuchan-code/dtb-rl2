@@ -46,7 +46,7 @@ class AnimalTower(gym.Env):
     Small base for the Animal Tower, action is 12 turns gym environment
     """
 
-    def __init__(self, udid=None, log_prefix="train", x8_enabled=True):
+    def __init__(self, udid=None, log_prefix="train", x8_enabled=True, verbose=2):
         rotate = [0, 4, 6, 8]
         move = np.linspace(150.5, 929.5, 11, dtype=np.uint32)
         self.actions = np.array(list(itertools.product(rotate, move)))
@@ -62,6 +62,7 @@ class AnimalTower(gym.Env):
 
         print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
         self.device = AnimalTowerDevice(udid, x8_enabled)
+        self.verbose = verbose
 
         self.episode_step_count = 0
         self.total_step_count = 0
@@ -88,7 +89,7 @@ class AnimalTower(gym.Env):
         """
         self.episode_step_count = 0
         self.episode_count += 1
-        # print(f"episode({self.episode_count})")
+        self.print_required(f"episode({self.episode_count})", verbose=1)
         self.prev_height = None
         self.prev_animal_count = None
         # 初期状態がリザルト画面とは限らないため, 初期の高さと動物数を取得できるまでループ
@@ -101,10 +102,9 @@ class AnimalTower(gym.Env):
             self.prev_height = self.device.get_height()
             self.prev_animal_count = self.device.get_animal_count()
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-            # デバッグ
-            # print(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}")
+            self.print_required(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}", verbose=2)
         t_1 = time()
-        # print(f"リセット所要時間: {t_1 - self.t_0:4.2f}秒")
+        self.print_required(f"リセット所要時間: {t_1 - self.t_0:4.2f}秒", verbose=2)
         self.t_0 = t_1
         return obs
 
@@ -112,10 +112,12 @@ class AnimalTower(gym.Env):
         """
         1アクション
         """
-        # print(f"Step({self.total_step_count + 1})")
+        self.print_required(f"Step({self.total_step_count + 1})", verbose=2)
         action = self.actions[action_index]
-        # print(
-        #     f"Action({action_index}/{self.actions.shape[0]-1}), {action[0], action[1]}")
+        self.print_required(
+            f"Action({action_index}/{self.actions.shape[0]-1}), {action[0], action[1]}",
+            verbose=2
+        )
         # 行動記録 (ステップと行動の添字)
         with open(self.action_log_path, "a", encoding="utf-8") as log_f:
             print(f"{self.episode_step_count},{action_index}", file=log_f)
@@ -125,7 +127,7 @@ class AnimalTower(gym.Env):
         # 変数の初期化
         done = False
         reward = 0.0
-        # 動物登場時の煙
+        # 動物登場時の煙回避用
         maybe_smoke = True
         while True:
             self.device.update_image()
@@ -140,12 +142,13 @@ class AnimalTower(gym.Env):
             # ループで必ず高さと動物数を取得
             height = self.device.get_height()
             animal_count = self.device.get_animal_count()
-            # print(
-            #     f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}"
-            # )
+            self.print_required(
+                f"動物数: {self.prev_animal_count} -> {animal_count}, 高さ: {self.prev_height} -> {height}",
+                verbose=2
+            )
             # 終端
             if self.device.is_result_screen(mag=self.device.mag[0]):
-                print("Game over")
+                self.print_required("Game over", verbose=1)
                 done = True
                 # ログファイルに書き出し
                 with open(self.result_log_path, "a", encoding="utf-8") as log_f:
@@ -154,7 +157,7 @@ class AnimalTower(gym.Env):
                 break
             # 結果画面ではないが, 高さもしくは動物数が取得できない場合
             elif height is None or animal_count is None:
-                # print("数値取得失敗")
+                self.print_required("数値取得失敗", verbose=2)
                 pass
             # 高さ更新はないが動物数更新を検知
             elif animal_count > self.prev_animal_count:
@@ -163,10 +166,10 @@ class AnimalTower(gym.Env):
                     maybe_smoke = False
                     continue
                 # ついでに高さ更新を検知
-                # if height > self.prev_height:
-                #     print(f"Height update: {height}m")
-                # else:
-                #     print("No height update")
+                if height > self.prev_height:
+                    self.print_required(f"Height update: {height}m", verbose=2)
+                else:
+                    self.print_required("No height update", verbose=2)
                 reward = 1.0
                 break
             sleep(self.device.pooling_intarval)
@@ -178,10 +181,10 @@ class AnimalTower(gym.Env):
         # 共通処理
         cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
         t_1 = time()
-        # print(f"ステップ所要時間: {t_1 - self.t_0:4.2f}秒")
+        self.print_required(f"ステップ所要時間: {t_1 - self.t_0:4.2f}秒", verbose=2)
         self.t_0 = t_1
-        # print(f"return obs, {reward}, {done}, {{}}")
-        # print("-"*NUM_OF_DELIMITERS)
+        self.print_required(f"return obs, {reward}, {done}, {{}}", verbose=2)
+        self.print_required("-"*NUM_OF_DELIMITERS, verbose=1)
         # baseline3のCnnPolicyの場合必要
         obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
         return obs_3d, reward, done, {}
@@ -192,6 +195,10 @@ class AnimalTower(gym.Env):
     def close(self):
         print("Close the appium connection")
         self.device.driver.quit()
+    
+    def print_required(self, moji: str, verbose=2):
+        if verbose <= self.verbose:
+            print(moji)
 
 
 class AnimalTowerDevice():
