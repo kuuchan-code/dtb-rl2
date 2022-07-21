@@ -63,6 +63,7 @@ class AnimalTower(gym.Env):
         print(f"Connecting to {udid}(Server localhost:4723/wd/hub)...")
         self.device = AnimalTowerDevice(udid, x8_enabled)
         self.verbose = verbose
+        print(self.verbose)
 
         self.episode_step_count = 0
         self.total_step_count = 0
@@ -102,7 +103,8 @@ class AnimalTower(gym.Env):
             self.prev_height = self.device.get_height()
             self.prev_animal_count = self.device.get_animal_count()
             cv2.imwrite(OBSERVATION_IMAGE_PATH, obs)
-            self.print_required(f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}", verbose=2)
+            self.print_required(
+                f"初期動物数: {self.prev_animal_count}, 初期高さ: {self.prev_height}", verbose=2)
         t_1 = time()
         self.print_required(f"リセット所要時間: {t_1 - self.t_0:4.2f}秒", verbose=2)
         self.t_0 = t_1
@@ -195,7 +197,7 @@ class AnimalTower(gym.Env):
     def close(self):
         print("Close the appium connection")
         self.device.driver.quit()
-    
+
     def print_required(self, moji: str, verbose=2):
         if verbose <= self.verbose:
             print(moji)
