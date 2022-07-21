@@ -14,12 +14,15 @@ import argparse
 parser = argparse.ArgumentParser(description="訓練開始")
 
 parser.add_argument("model", help="モデル")
+parser.add_argument("--name", help="名前")
 parser.add_argument("-s", "--udid", help="udid")
+parser.add_argument("-d", "--device", help="device", default="auto")
 
 args = parser.parse_args()
 
 # udid = "790908812299"
 # udid = "482707805697"
+# udid = "P3PDU18321001333"
 device = "auto"
 # device = "cpu"
 x8_enabled = True
@@ -27,11 +30,14 @@ x8_enabled = True
 if args.model == "PPO":
     # name_prefix = "_ppo_cnn_r4m11b"
     model_path = max(glob.glob("models/*ppo*"), key=os.path.getctime)
-    mg = re.findall(f'models/(.+)_\d+_steps', model_path)
-    name_prefix = f"_{mg[0]}"
+    if args.name is None:
+        mg = re.findall(f'models/(.+)_\d+_steps', model_path)
+        name_prefix = f"_{mg[0]}"
+    else:
+        name_prefix = f"_ppo_cnn_r4m11b_{args.name}"
 
-    # print(name_prefix)
-    # exit()
+    print(name_prefix)
+    exit()
 
     print(f"Load {model_path}")
 
