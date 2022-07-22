@@ -79,7 +79,7 @@ if args.model == "PPO":
     print(f"gamma={model.gamma}")
     print(f"verbose={model.verbose}")
     print(f"device={model.device}")
-    exit()
+    # exit()
 
 
 elif args.model == "A2C":
@@ -101,7 +101,7 @@ elif args.model == "A2C":
     model = A2C.load(
         path=model_path,
         env=env, tensorboard_log="tensorboard",
-        device=device,
+        device=args.device,
         print_system_info=True
     )
     # model.learning_rate = 0.0001
