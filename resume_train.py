@@ -26,8 +26,9 @@ args = parser.parse_args()
 
 # udid = "790908812299"
 # udid = "482707805697"
-# udid = "P3PDU18321001333"
-device = "auto"
+# udid = "353010080451240" # 中古の灰色
+# udid = "P3PDU18321001333" # あさひくんの
+# device = "auto"
 # device = "cpu"
 x8_enabled = True
 
@@ -50,9 +51,8 @@ if args.model == "PPO":
 
     model = PPO.load(
         path=model_path,
-        env=env, tensorboard_log="tensorboard",
-        device=device,
-        print_system_info=True
+        env=env,
+        device=args.device,
     )
     if args.learning_rate is not None:
         model.learning_rate = args.learning_rate
@@ -60,6 +60,16 @@ if args.model == "PPO":
         model.n_steps = args.n_steps
     if args.n_epochs is not None:
         model.n_epochs = args.n_epochs
+    
+    # 一旦保存して再読込み
+    # これでパラメータ変えられるか?
+    model.save("models/_tmp")
+    model = PPO.load(
+        path="models/_tmp.zip",
+        env=env, tensorboard_log="tensorboard",
+        device=args.device,
+        print_system_info=True
+    )
 
     print(f"policy={model.policy}")
     print(f"learning_rate={model.learning_rate}")
@@ -91,7 +101,7 @@ elif args.model == "A2C":
     model = A2C.load(
         path=model_path,
         env=env, tensorboard_log="tensorboard",
-        device=device,
+        device=args.device,
         print_system_info=True
     )
     # model.learning_rate = 0.0001
