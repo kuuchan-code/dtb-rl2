@@ -186,7 +186,7 @@ class AnimalTower(gym.Env):
         self.print_required(f"ステップ所要時間: {t_1 - self.t_0:4.2f}秒", verbose=2)
         self.t_0 = t_1
         self.print_required(f"return obs, {reward}, {done}, {{}}", verbose=2)
-        self.print_required("-"*NUM_OF_DELIMITERS, verbose=1)
+        self.print_required("-"*NUM_OF_DELIMITERS, verbose=2)
         # baseline3のCnnPolicyの場合必要
         obs_3d = np.reshape(obs, (1, *TRAINNING_IMAGE_SIZE))
         return obs_3d, reward, done, {}
