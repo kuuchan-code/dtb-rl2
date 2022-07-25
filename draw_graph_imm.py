@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import random
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QFileDialog, QAction, QHBoxLayout, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QFileDialog, QAction, QHBoxLayout, QPushButton, QGridLayout
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QIcon
 import numpy as np
@@ -22,12 +22,11 @@ class MyWindow(QMainWindow):
         # ステータスバー設定 (下に出てくるやつ)
         openFile.setStatusTip("Open new File")
 
-        self.layout = QHBoxLayout()
+        self.grid_layout = QGridLayout()
 
         self.widget1 = MyWidget()
-        # self.layout.addWidget(self.widget1)
-        # self.layout.addWidget(QPushButton("1"))
-        self.setCentralWidget(self.widget1)
+        self.grid_layout.addWidget(self.widget1)
+        # self.setCentralWidget(self.widget1)
         
         openFile.triggered.connect(self.show_file_dialog)
 
@@ -36,6 +35,7 @@ class MyWindow(QMainWindow):
         fileMenu = menubar.addMenu("&File")
         fileMenu.addAction(openFile)
 
+        # self.setLayout(self.grid_layout)
 
     def show_file_dialog(self):
         # 第二引数はダイアログのタイトル、第三引数は表示するパス
