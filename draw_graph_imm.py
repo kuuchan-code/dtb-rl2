@@ -33,7 +33,7 @@ class MyWindow(QMainWindow):
 
     def show_file_dialog(self):
         # 第二引数はダイアログのタイトル、第三引数は表示するパス
-        fname = QFileDialog.getOpenFileName(self, "Open file", SOURCE_DIR)
+        fname = QFileDialog.getOpenFileName(self, "Open file", SOURCE_DIR, "*.csv")
 
         # fname[0]は選択したファイルのパス（ファイル名を含む）
         if fname[0]:
