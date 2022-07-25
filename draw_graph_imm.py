@@ -5,16 +5,22 @@ import numpy as np
 import pyqtgraph as pg
 import sys
 
+class MyWidget(QWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(400,200,500,500)
+        pg.setConfigOptions(antialias=True)
+        pg.setConfigOptions(foreground='k')
+        pg.setConfigOptions(background='w')
+        win = pg.GraphicsLayoutWidget(size=(400,300),border=True,parent=self)
+        win.move(10,50)
+
+
 maxX = 100
 app = QApplication(sys.argv)
-gui = QWidget() 
-gui.setGeometry(400,200,500,500)
+gui = MyWidget()
 
-pg.setConfigOptions(antialias=True)
-pg.setConfigOptions(foreground='k')
-pg.setConfigOptions(background='w')
-win = pg.GraphicsLayoutWidget(size=(400,300),border=True,parent=gui)
-win.move(10,50)
 
 gui.show()
 sys.exit(app.exec_())  
