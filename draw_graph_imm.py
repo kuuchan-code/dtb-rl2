@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import random
 from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QFileDialog, QAction
 from PyQt5.QtCore import QTimer
@@ -6,6 +7,8 @@ from PyQt5.QtGui import QIcon
 import numpy as np
 import pyqtgraph as pg
 import sys
+
+SOURCE_DIR = os.path.dirname(__file__)
 
 class MyWindow(QMainWindow):
     def __init__(self):
@@ -28,12 +31,12 @@ class MyWindow(QMainWindow):
 
     def show_file_dialog(self):
         # 第二引数はダイアログのタイトル、第三引数は表示するパス
-        fname = QFileDialog.getOpenFileName(self, 'Open file', '/home')
+        fname = QFileDialog.getOpenFileName(self, "Open file", SOURCE_DIR)
 
         # fname[0]は選択したファイルのパス（ファイル名を含む）
         if fname[0]:
             # ファイル読み込み
-            with open(fname[0], 'r') as f:
+            with open(fname[0], "r") as f:
                 data = f.read()
                 print(data)
 
