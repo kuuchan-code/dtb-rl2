@@ -13,12 +13,18 @@ class MyWindow(QMainWindow):
         self.setGeometry(400,200,500,500)
         self.statusBar()
         # メニューバーのアイコン設定
-        openFile = QAction(QIcon("src/count0_HD"), 'Open', self)
+        # openFile = QAction(QIcon("src/count0_HD"), "Open", self)
+        openFile = QAction("Open", self)
         # ショートカット設定
         openFile.setShortcut('Ctrl+O')
         # ステータスバー設定
         openFile.setStatusTip('Open new File')
         self.setCentralWidget(MyWidget())
+
+        # メニューバー作成
+        menubar = self.menuBar()
+        fileMenu = menubar.addMenu("&File")
+        fileMenu.addAction(openFile)
 
 class MyWidget(QWidget):
 
