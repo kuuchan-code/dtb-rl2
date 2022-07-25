@@ -1,16 +1,30 @@
 #!/usr/bin/env python3
 import random
-from PyQt5.QtWidgets import QApplication, QWidget
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QInputDialog, QAction
 from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QIcon
 import numpy as np
 import pyqtgraph as pg
 import sys
+
+class MyWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(400,200,500,500)
+        self.statusBar()
+        # メニューバーのアイコン設定
+        openFile = QAction(QIcon("src/count0_HD"), 'Open', self)
+        # ショートカット設定
+        openFile.setShortcut('Ctrl+O')
+        # ステータスバー設定
+        openFile.setStatusTip('Open new File')
+        self.setCentralWidget(MyWidget())
 
 class MyWidget(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setGeometry(400,200,500,500)
+        # self.setGeometry(400,200,500,500)
         pg.setConfigOptions(antialias=True)
         pg.setConfigOptions(foreground='k')
         pg.setConfigOptions(background='w')
@@ -21,6 +35,7 @@ class MyWidget(QWidget):
         graph = win.addPlot(title="Data")
         graph.setLabel('left',"Power", units='W')
         graph.setLabel('bottom',"Time", units='s')
+
 
         self.counter = 0
         self.x = []
@@ -41,8 +56,7 @@ class MyWidget(QWidget):
     
 maxX = 100
 app = QApplication(sys.argv)
-gui = MyWidget()
-
-
+gui = MyWindow()
 gui.show()
+
 sys.exit(app.exec_())  
