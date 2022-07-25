@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import random
-from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QFileDialog, QAction
+from PyQt5.QtWidgets import QMainWindow, QApplication, QWidget, QFileDialog, QAction, QHBoxLayout, QPushButton
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QIcon
 import numpy as np
@@ -21,7 +21,12 @@ class MyWindow(QMainWindow):
         openFile.setShortcut("Ctrl+O")
         # ステータスバー設定 (下に出てくるやつ)
         openFile.setStatusTip("Open new File")
+
+        self.layout = QHBoxLayout()
+
         self.widget1 = MyWidget()
+        # self.layout.addWidget(self.widget1)
+        # self.layout.addWidget(QPushButton("1"))
         self.setCentralWidget(self.widget1)
         
         openFile.triggered.connect(self.show_file_dialog)
@@ -30,6 +35,7 @@ class MyWindow(QMainWindow):
         menubar = self.menuBar()
         fileMenu = menubar.addMenu("&File")
         fileMenu.addAction(openFile)
+
 
     def show_file_dialog(self):
         # 第二引数はダイアログのタイトル、第三引数は表示するパス
@@ -49,7 +55,7 @@ class MyWidget(QWidget):
         pg.setConfigOptions(foreground='k')
         pg.setConfigOptions(background='w')
 
-        win = pg.GraphicsLayoutWidget(size=(400,300),border=True,parent=self)
+        win = pg.GraphicsLayoutWidget(self,size=(400,300),border=True)
         win.move(10,50)
 
         graph = win.addPlot(title="Data")
@@ -57,7 +63,7 @@ class MyWidget(QWidget):
         graph.setLabel('bottom',"Episode", units="")
 
         self.curve = graph.plot(pen=pg.mkPen((120,23,200),width=2))
-        
+
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_data)
         self.timer.setSingleShot(True)
