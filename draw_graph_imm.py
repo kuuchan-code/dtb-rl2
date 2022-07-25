@@ -53,13 +53,11 @@ class MyWidget(QWidget):
         win.move(10,50)
 
         graph = win.addPlot(title="Data")
-        graph.setLabel('left',"Power", units='W')
-        graph.setLabel('bottom',"Time", units='s')
+        graph.setLabel('left',"Score", units="")
+        graph.setLabel('bottom',"Episode", units="")
 
-        self.counter = 0
-        self.x = []
-        self.y = []
-        self.curve = graph.plot(self.x,self.y,pen=pg.mkPen((120,23,200),width=2))
+        self.curve = graph.plot(pen=pg.mkPen((120,23,200),width=2))
+        
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_data)
         self.timer.setSingleShot(True)
@@ -72,7 +70,8 @@ class MyWidget(QWidget):
     
     def set_csv_path(self, csv_path: str):
         self.csv_path = csv_path
-    
+
+
 maxX = 100
 app = QApplication(sys.argv)
 gui = MyWindow()
