@@ -7,6 +7,7 @@ from PyQt5.QtGui import QIcon
 import numpy as np
 import pyqtgraph as pg
 import sys
+import pandas as pd
 
 SOURCE_DIR = os.path.dirname(__file__)
 
@@ -20,7 +21,8 @@ class MyWindow(QMainWindow):
         openFile.setShortcut("Ctrl+O")
         # ステータスバー設定 (下に出てくるやつ)
         openFile.setStatusTip("Open new File")
-        self.setCentralWidget(MyWidget())
+        self.widget1 = MyWidget()
+        self.setCentralWidget(self.widget1)
         
         openFile.triggered.connect(self.show_file_dialog)
 
@@ -35,10 +37,11 @@ class MyWindow(QMainWindow):
 
         # fname[0]は選択したファイルのパス（ファイル名を含む）
         if fname[0]:
+            self.widget1.set_df(fname[0])
             # ファイル読み込み
-            with open(fname[0], "r") as f:
-                data = f.read()
-                print(data)
+            # with open(fname[0], "r") as f:
+            #     data = f.read()
+            #     print(data)
 
 class MyWidget(QWidget):
 
@@ -72,7 +75,10 @@ class MyWidget(QWidget):
         self.counter += 1
         self.curve.setData(self.x, self.y)
         self.timer.start(500)
-
+    
+    def set_df(self, csv_path: str):
+        self.df = pd.read_csv(csv_path)
+        print(self.df)
     
 maxX = 100
 app = QApplication(sys.argv)
