@@ -37,11 +37,8 @@ class MyWindow(QMainWindow):
 
         # fname[0]は選択したファイルのパス（ファイル名を含む）
         if fname[0]:
-            self.widget1.set_df(fname[0])
-            # ファイル読み込み
-            # with open(fname[0], "r") as f:
-            #     data = f.read()
-            #     print(data)
+            self.widget1.set_csv_path(fname[0])
+            self.widget1.update_data()
 
 class MyWidget(QWidget):
 
@@ -59,26 +56,22 @@ class MyWidget(QWidget):
         graph.setLabel('left',"Power", units='W')
         graph.setLabel('bottom',"Time", units='s')
 
-
         self.counter = 0
         self.x = []
         self.y = []
         self.curve = graph.plot(self.x,self.y,pen=pg.mkPen((120,23,200),width=2))
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.add_data)
+        self.timer.timeout.connect(self.update_data)
         self.timer.setSingleShot(True)
-        self.add_data()
+
     
-    def add_data(self):
-        self.x.append(self.counter)
-        self.y.append(random.random())
-        self.counter += 1
-        self.curve.setData(self.x, self.y)
-        self.timer.start(500)
+    def update_data(self):
+        self.df = pd.read_csv(self.csv_path)
+        self.curve.setData(self.df.index, self.df["animals"])
+        self.timer.start(1000)
     
-    def set_df(self, csv_path: str):
-        self.df = pd.read_csv(csv_path)
-        print(self.df)
+    def set_csv_path(self, csv_path: str):
+        self.csv_path = csv_path
     
 maxX = 100
 app = QApplication(sys.argv)
