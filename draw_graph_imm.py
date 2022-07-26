@@ -22,11 +22,11 @@ class MyWindow(QMainWindow):
         # ステータスバー設定 (下に出てくるやつ)
         openFile.setStatusTip("Open new File")
 
-        self.grid_layout = QGridLayout()
+        # self.grid_layout = QGridLayout()
 
         self.widget1 = MyWidget()
-        self.grid_layout.addWidget(self.widget1)
-        # self.setCentralWidget(self.widget1)
+        # self.grid_layout.addWidget(self.widget1)
+        self.setCentralWidget(self.widget1)
         
         openFile.triggered.connect(self.show_file_dialog)
 
@@ -55,7 +55,7 @@ class MyWidget(QWidget):
         pg.setConfigOptions(foreground='k')
         pg.setConfigOptions(background='w')
 
-        win = pg.GraphicsLayoutWidget(self,size=(400,300),border=True)
+        win = pg.GraphicsLayoutWidget(self,size=(400, 300),border=True)
         win.move(10,50)
 
         graph = win.addPlot(title="Data")
