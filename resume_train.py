@@ -24,7 +24,7 @@ parser.add_argument("--n-epochs", help="n_epochs", type=int)
 
 args = parser.parse_args()
 
-# udid = "790908812299"
+# udid = "790908812299" # 中古の黒
 # udid = "482707805697"
 # udid = "353010080451240" # 中古の灰色
 # udid = "P3PDU18321001333" # あさひくんの
