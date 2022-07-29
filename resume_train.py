@@ -44,15 +44,15 @@ if args.model == "PPO":
     else:
         model_path = max(
             glob.glob(f"{MODELS_DIR}/*{args.file}*"), key=os.path.getctime)
-    print(model_path)
+    # print(model_path)
     if args.name is None:
         mg = re.findall(f'models/(.+)_\d+_steps', model_path)
         name_prefix = f"_{mg[0]}"
     else:
         name_prefix = f"_ppo_cnn_r4m11b_{args.name}"
 
-    print(name_prefix)
-    exit()
+    # print(name_prefix)
+    # exit()
 
     print(f"Load {model_path}")
 
