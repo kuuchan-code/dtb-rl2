@@ -14,9 +14,11 @@ import argparse
 parser = argparse.ArgumentParser(description="訓練開始")
 
 parser.add_argument("model", help="モデル")
-parser.add_argument("--name", help="名前")
+parser.add_argument(
+    "-f", "--file", help="modelsディレクトリの中からファイル名指定 (一部でも可. 複数あれば最新のものを選ぶ)")
 parser.add_argument("-s", "--udid", help="udid")
 parser.add_argument("-d", "--device", help="device", default="auto")
+parser.add_argument("--name", help="名前")
 parser.add_argument("--env-verbose", help="詳細な出力", type=int, default=2)
 parser.add_argument("--learning-rate", help="学習率", type=float)
 parser.add_argument("--n-steps", help="n_steps", type=int)
@@ -32,9 +34,17 @@ args = parser.parse_args()
 # device = "cpu"
 x8_enabled = True
 
+SRC_DIR = os.path.dirname(__file__)
+MODELS_DIR = f"{SRC_DIR}/models/"
+
 if args.model == "PPO":
-    # name_prefix = "_ppo_cnn_r4m11b"
-    model_path = max(glob.glob("models/*ppo*"), key=os.path.getctime)
+    if args.file is None:
+        model_path = max(
+            glob.glob(f"{MODELS_DIR}/*ppo*"), key=os.path.getctime)
+    else:
+        model_path = max(
+            glob.glob(f"{MODELS_DIR}/*{args.file}*"), key=os.path.getctime)
+    # print(model_path)
     if args.name is None:
         mg = re.findall(f'models/(.+)_\d+_steps', model_path)
         name_prefix = f"_{mg[0]}"
@@ -60,7 +70,7 @@ if args.model == "PPO":
         model.n_steps = args.n_steps
     if args.n_epochs is not None:
         model.n_epochs = args.n_epochs
-    
+
     # 一旦保存して再読込み
     # これでパラメータ変えられるか?
     model.save("models/_tmp")
