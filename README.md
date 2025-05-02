@@ -1,8 +1,69 @@
-# dtb-rl2
-Deep reinforcement learning on the small base of the Animal Tower.
-## r4
-r = [0, 4, 6, 8]
-## conv_filterについて
-https://docs.ray.io/en/ray-1.1.0/rllib-models.html
+# DTB-RL2 (Deep Tower Battle Reinforcement Learning 2)
 
-After preprocessing raw environment outputs, these preprocessed observations are then fed through a policy’s model. RLlib picks default models based on a simple heuristic: A vision network (TF or Torch) for observations that have a shape of length larger than 2 (for example, (84 x 84 x 3)), and a fully connected network (TF or Torch) for everything else. These models can be configured via the model config key, documented in the model catalog. Note that for the vision network case, you’ll probably have to configure conv_filters if your environment observations have custom sizes, e.g., "model": {"dim": 42, "conv_filters": [[16, [4, 4], 2], [32, [4, 4], 2], [512, [11, 11], 1]]} for 42x42 observations. Thereby, always make sure that the last Conv2D output has an output shape of [B, 1, 1, X] ([B, X, 1, 1] for Torch), where B=batch and X=last Conv2D layer’s number of filters, so that RLlib can flatten it. An informative error will be thrown if this is not the case.
+## 概要
+このプロジェクトは、Deep Reinforcement Learningを使用して「どうぶつタワー」のゲームを学習するシステムです。Ray RLlibを使用した強化学習の実装を含みます。
+
+## 機能
+- 強化学習によるゲームプレイの自動化
+- カスタム環境の実装
+- 学習結果の可視化と統計分析
+- 学習済みモデルの予測機能
+
+## 必要条件
+- Python 3.x
+- OpenCV
+- Appium-Python-Client
+- Pyper
+- Matplotlib
+- Ray RLlib
+
+## インストール方法
+```bash
+pip install -r requirements.txt
+```
+
+## 使用方法
+
+### 学習の開始
+```bash
+python start_train.py
+```
+
+### 学習の再開
+```bash
+python resume_train.py
+```
+
+### 予測の実行
+```bash
+python predict.py
+```
+
+### 統計の計算
+```bash
+python calc_stat.py
+```
+
+### グラフの描画
+```bash
+python draw_graph.py
+```
+
+## プロジェクト構造
+- `src/`: ソースコード
+- `statistics/`: 統計データ
+- `test/`: テストコード
+- `log/`: ログファイル
+- `env.py`: カスタム環境の実装
+- `start_train.py`: 学習開始スクリプト
+- `resume_train.py`: 学習再開スクリプト
+- `predict.py`: 予測スクリプト
+- `calc_stat.py`: 統計計算スクリプト
+- `draw_graph.py`: グラフ描画スクリプト
+
+## モデル設定
+### 畳み込みフィルターについて
+Ray RLlibのモデル設定では、環境の観測サイズに応じて適切な畳み込みフィルターを設定する必要があります。詳細は[Ray RLlibのドキュメント](https://docs.ray.io/en/ray-1.1.0/rllib-models.html)を参照してください。
+
+## ライセンス
+このプロジェクトはMITライセンスの下で公開されています。
