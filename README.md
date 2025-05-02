@@ -1,4 +1,4 @@
-# DTB-RL2 (Deep Tower Battle Reinforcement Learning 2)
+# AnimalTower-RL (どうぶつタワー強化学習)
 
 ## 概要
 このプロジェクトは、Deep Reinforcement Learningを使用して「どうぶつタワー」のゲームを学習するシステムです。Ray RLlibを使用した強化学習の実装を含みます。
